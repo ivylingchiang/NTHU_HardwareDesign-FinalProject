@@ -9,14 +9,14 @@ module tracker_sensor(clk, reset, left_track, right_track, mid_track, detect_roa
     always@(posedge clk)begin
         //blocked
         case({left_track,mid_track,right_track})
-            3'd0: detect_road <= 3'd0;
-            3'd1: detect_road <= 3'd1;
-            3'd2: detect_road <= 3'd2;
-            3'd3: detect_road <= 3'd3;
-            3'd4: detect_road <= 3'd4;
-            3'd5: detect_road <= 3'd5;
-            3'd6: detect_road <= 3'd6;
-            3'd7: detect_road <= 3'd7;
+            3'd0: detect_road <= 3'd7;
+            3'd1: detect_road <= 3'd6;
+            3'd2: detect_road <= 3'd5;
+            3'd3: detect_road <= 3'd4;
+            3'd4: detect_road <= 3'd3;
+            3'd5: detect_road <= 3'd2;
+            3'd6: detect_road <= 3'd1;
+            3'd7: detect_road <= 3'd0;
             default:detect_road <= detect_road;
         endcase  
     end

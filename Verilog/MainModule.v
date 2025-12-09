@@ -18,6 +18,7 @@ module mainModule(
   // Wire, Reg signal
     reg [4:0]state, nextState;
     wire [2:0]detect;
+    wire [19:0] distance;
     localparam [2:0]ERROR_ROAD = 3'b000;
     localparam [2:0]RIGHT_ROAD = 3'b001;
     localparam [2:0]STRAIGHT_ROAD = 3'b010;
@@ -28,16 +29,15 @@ module mainModule(
     localparam [2:0]TURN_ROAD111 = 3'b111;
 
   // FSM signal
-    reg checkPoint1;
     localparam [4:0]IDLE = 5'd0;
     localparam [4:0]START = 5'd1;
     localparam [4:0]COUNT = 5'd2;
     localparam [4:0]STRAIGHT = 5'd3;
     localparam [4:0]CHOOSE = 5'd4;
-    localparam [4:0]TURN_STRAIGHT = 5'd5;
-    localparam [4:0]TURN_LEFT = 5'd6;
-    localparam [4:0]TURN_RIGHT = 5'd7;
-    localparam [4:0]STOP = 5'd30;
+    // localparam [4:0]TURN_STRAIGHT = 5'd5;
+    // localparam [4:0]TURN_LEFT = 5'd6;
+    // localparam [4:0]TURN_RIGHT = 5'd7;
+    // localparam [4:0]STOP = 5'd30;
     localparam [4:0]ERROR = 5'd31;
 
   // Counter signal
@@ -45,6 +45,15 @@ module mainModule(
     wire flash;
     wire countFinish;
     clockDriver cD( .clk(clk), .countEnable(countEnable), .countFinish(countFinish), .flash(flash));
+    reg checkPoint1;
+    always @(posedge clk or posedge rst) begin
+        if(rst)
+            checkPoint1 <= 0;
+        else if(state == CHOOSE && detect == 3'b000)
+            checkPoint1 <= 1;
+        else if(state != CHOOSE)
+            checkPoint1 <= 0;
+    end
 
   // Turn detect, record signal
     reg [1:0]turnDirection;
@@ -56,28 +65,7 @@ module mainModule(
         if(rst) state <= IDLE;
         else state <= nextState;
     end
-    always @(posedge clk)begin
-        case(state)
-            IDLE:begin
-                checkPoint1<= 0;
-            end
-            START:begin
-                checkPoint1<= 0;
-            end
-            COUNT:begin
-                checkPoint1<= 0;
-            end
-            STRAIGHT:begin
-                checkPoint1<= 0;
-            end
-            CHOOSE:begin
-                if(detect == 3'b000) checkPoint1 <= 1;
-            end
-            ERROR:begin
-                checkPoint1<= 0;
-            end
-        endcase
-    end
+    
     always @(*)begin
         nextState = state;
         case(state)
@@ -86,30 +74,32 @@ module mainModule(
             COUNT: nextState = (countFinish) ? STRAIGHT: COUNT;
             STRAIGHT:begin
                 case(detect)
-                   ERROR_ROAD: nextState = ERROR;
-                   RIGHT_ROAD: nextState = ERROR;
-                   RIGHT_LITTLE_ROAD: nextState = ERROR;
-                   LEFT_ROAD: nextState = ERROR;
-                   LEFT_LITTLE_ROAD: nextState = ERROR;
+                   ERROR_ROAD: nextState = STRAIGHT;
+                //    RIGHT_ROAD: nextState = ERROR;
+                //    RIGHT_LITTLE_ROAD: nextState = ERROR;
+                //    LEFT_ROAD: nextState = ERROR;
+                //    LEFT_LITTLE_ROAD: nextState = ERROR;
 
 
                    STRAIGHT_ROAD: nextState = STRAIGHT;
                    TURN_ROAD111: nextState = CHOOSE;
                    TURN_ROAD101: nextState = ERROR; // Turn 之前不會遇到101 detect
+                   default : nextState = STRAIGHT;
                 endcase
             end
             CHOOSE: begin 
                 case(detect)
                    ERROR_ROAD: nextState = CHOOSE;
-                   RIGHT_ROAD:nextState = CHOOSE;
-                   RIGHT_LITTLE_ROAD:nextState = CHOOSE;
-                   LEFT_ROAD:nextState = CHOOSE;
-                   LEFT_LITTLE_ROAD:nextState = CHOOSE;
+                //    RIGHT_ROAD:nextState = CHOOSE;
+                //    RIGHT_LITTLE_ROAD:nextState = CHOOSE;
+                //    LEFT_ROAD:nextState = CHOOSE;
+                //    LEFT_LITTLE_ROAD:nextState = CHOOSE;
                    STRAIGHT_ROAD: nextState = CHOOSE;
 
 
                    TURN_ROAD101: nextState = CHOOSE; 
-                   TURN_ROAD111: nextState = (checkPoint1)? TURN_STRAIGHT : CHOOSE; 
+                   TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                    default :  nextState = CHOOSE;
                 endcase
             end
             // TURN_STRAIGHT:begin // straight
@@ -158,12 +148,13 @@ module mainModule(
     always @(*)begin
         case (state)
             IDLE: LED = 16'd0;
-            START: LED = 16'hFFFF;
-            COUNT: LED = (flash)? ~LED : LED;
-            STRAIGHT: LED = 16'd0;
-            CHOOSE: LED = 16'hAAAA;
+            START: LED = 16'hF000;
+            COUNT: LED = (flash)? 16'hFFFF : 16'hFFF0;
+            STRAIGHT: LED = 16'b0000_0111_1110_0000;
+            CHOOSE: LED = 16'b1111_1000_0001_1111;
             // TURN:
-            ERROR: LED = 16'h8001; 
+            ERROR: LED = 16'hAAAA; 
+            default: LED = 16'h0000;
         endcase
     end
 

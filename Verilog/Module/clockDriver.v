@@ -9,7 +9,7 @@ module clockDriver(
   reg [1:0]counter;
   always @(posedge clk)begin
     if(countEnable)begin
-      if(num +1 >= 100000000)begin
+      if(num  >= 100000000 -1)begin
         num <= 32'd0;
         counter <= counter +1;
         flash <= ~flash;
