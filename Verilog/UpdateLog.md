@@ -37,5 +37,6 @@
     (2) r_IN & l_IN:
         forward(2'b10)
         stop(2'b00)
+        
   4. Update "flow" led display of the CHOOSE state
 ```
