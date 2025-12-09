@@ -161,7 +161,7 @@ module mainModule(
             START: LED = 16'hFFFF;
             COUNT: LED = (flash)? ~LED : LED;
             STRAIGHT: LED = 16'd0;
-            // CHOOSE: 
+            CHOOSE: LED = 16'hAAAA;
             // TURN:
             ERROR: LED = 16'h8001; 
         endcase
@@ -172,7 +172,7 @@ module mainModule(
     motor A(
         .clk(clk),
         .rst(rst),
-        .mode(mode),
+        .mode(state),
         .pwm({left_pwm, right_pwm}),
         .l_IN({IN1, IN2}),
         .r_IN({IN3, IN4})
