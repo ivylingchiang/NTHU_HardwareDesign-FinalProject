@@ -6,7 +6,7 @@ module mainModule(
     input right_track,
     input mid_track,
     input wire [15:0]sw,
-    output reg [15:0]LED,
+    output wire [15:0]LED,
     output trig,
     output IN1,
     output IN2,
@@ -28,20 +28,25 @@ module mainModule(
     localparam [2:0]LEFT_LITTLE_ROAD = 3'b110;
     localparam [2:0]TURN_ROAD111 = 3'b111;
 
+  // debounce, one pulse
+    wire rst_d,rst_op;
+    debounce d0( .pb_debounced(rst_d), .clk(clk), .pb(rst));
+    onepulse o0( .signal(rst_d), .clk(clk), .op(rst_op));
+
   // FSM signal
     localparam [4:0]IDLE = 5'd0;
     localparam [4:0]START = 5'd1;
     localparam [4:0]COUNT = 5'd2;
     localparam [4:0]STRAIGHT = 5'd3;
     localparam [4:0]CHOOSE = 5'd4;
-    // localparam [4:0]TURN_STRAIGHT = 5'd5;
-    // localparam [4:0]TURN_LEFT = 5'd6;
-    // localparam [4:0]TURN_RIGHT = 5'd7;
-    // localparam [4:0]STOP = 5'd30;
+    // localparam [4:0]LEFT = 5'd5;
+    // localparam [4:0]RIGHT = 5'd6;
+    // localparam [4:0]BACK = 5'd7;
+    // localparam [4:0]STOP = 5'd8;
     localparam [4:0]ERROR = 5'd31;
 
   // Counter signal
-    wire countEnable = (state == START)? 1:0;
+    wire countEnable = (state == COUNT)? 1:0;
     wire flash;
     wire countFinish;
     clockDriver cD( .clk(clk), .countEnable(countEnable), .countFinish(countFinish), .flash(flash));
@@ -56,18 +61,17 @@ module mainModule(
     end
 
   // Turn detect, record signal
-    reg [1:0]turnDirection;
-    reg [31:0]turnRecord; // stake
+    // reg [1:0]turnDirection;
+    // reg [31:0]turnRecord; // stake
     
 
   // FSM transform  
-    always @(posedge clk)begin
-        if(rst) state <= IDLE;
+    always @(posedge clk or posedge clk)begin
+        if(rst || sw[0] == 0) state <= IDLE;
         else state <= nextState;
     end
     
     always @(*)begin
-        nextState = state;
         case(state)
             IDLE: nextState = (sw[0])? START : IDLE;
             START: nextState = (detect == 3'b010) ? COUNT : START;
@@ -75,10 +79,10 @@ module mainModule(
             STRAIGHT:begin
                 case(detect)
                    ERROR_ROAD: nextState = STRAIGHT;
-                //    RIGHT_ROAD: nextState = ERROR;
-                //    RIGHT_LITTLE_ROAD: nextState = ERROR;
-                //    LEFT_ROAD: nextState = ERROR;
-                //    LEFT_LITTLE_ROAD: nextState = ERROR;
+                   RIGHT_ROAD: nextState = ERROR;
+                   RIGHT_LITTLE_ROAD: nextState = ERROR;
+                   LEFT_ROAD: nextState = ERROR;
+                   LEFT_LITTLE_ROAD: nextState = ERROR;
 
 
                    STRAIGHT_ROAD: nextState = STRAIGHT;
@@ -90,10 +94,10 @@ module mainModule(
             CHOOSE: begin 
                 case(detect)
                    ERROR_ROAD: nextState = CHOOSE;
-                //    RIGHT_ROAD:nextState = CHOOSE;
-                //    RIGHT_LITTLE_ROAD:nextState = CHOOSE;
-                //    LEFT_ROAD:nextState = CHOOSE;
-                //    LEFT_LITTLE_ROAD:nextState = CHOOSE;
+                   RIGHT_ROAD:nextState = CHOOSE;
+                   RIGHT_LITTLE_ROAD:nextState = CHOOSE;
+                   LEFT_ROAD:nextState = CHOOSE;
+                   LEFT_LITTLE_ROAD:nextState = CHOOSE;
                    STRAIGHT_ROAD: nextState = CHOOSE;
 
 
@@ -141,22 +145,69 @@ module mainModule(
             //     endcase
             // end
             ERROR: nextState = (~sw[0]) ? IDLE : ERROR;
+            default : nextState = state;
         endcase
     end
-
-  // Led transform
+  
+  // led display
+    // led right 3: show detect info
+    reg [2:0]led_right; 
+    always @(*)begin
+        case(detect)
+            ERROR_ROAD: led_right = 3'b000;
+            RIGHT_ROAD: led_right = 3'b001;
+            STRAIGHT_ROAD: led_right = 3'b010;
+            RIGHT_LITTLE_ROAD: led_right = 3'b011;
+            LEFT_ROAD: led_right = 3'b100;
+            TURN_ROAD101: led_right = 3'b101;
+            LEFT_LITTLE_ROAD: led_right = 3'b110;
+            TURN_ROAD111: led_right = 3'b111;
+            default : led_right = 3'b000;
+        endcase
+    end
+    // led left 5: Led state info 
+    reg [4:0]led_left;
+    reg [2:0]choose_lamp;
+    reg [23:0]cnt;
+    always @(posedge clk or posedge rst) begin
+        if(rst) begin
+            cnt <= 0;
+            choose_lamp <= 3'b001;
+        end 
+        else if(state == CHOOSE) begin
+            cnt <= cnt + 1;
+            if(cnt == 24'd500000) begin
+                cnt <= 0;
+                choose_lamp <= {choose_lamp[1:0], choose_lamp[2]}; 
+            end
+        end
+        else begin
+            choose_lamp <= 3'b001;
+            cnt <= 0;
+        end
+    end
+    always @(*) begin
+        case (state)
+            IDLE: led_left = 5'd0;
+            START: led_left = 5'd1;
+            COUNT: led_left = 5'b00010;
+            STRAIGHT: led_left = 5'b01000;
+            CHOOSE:led_left = {choose_lamp , 2'd0};
+            ERROR: led_left = 5'b11111;
+            default:led_left = 5'd0;
+        endcase
+    end
+    // led middle [15 14 13 12 11] [10] [9 - 4] [3] [2 1 0]:
+    // [9 8 7 6 5 4]: count
+    reg [5:0]led_middle;
     always @(*)begin
         case (state)
-            IDLE: LED = 16'd0;
-            START: LED = 16'hF000;
-            COUNT: LED = (flash)? 16'hFFFF : 16'hFFF0;
-            STRAIGHT: LED = 16'b0000_0111_1110_0000;
-            CHOOSE: LED = 16'b1111_1000_0001_1111;
-            // TURN:
-            ERROR: LED = 16'hAAAA; 
-            default: LED = 16'h0000;
+            COUNT: led_middle = (flash) ? 6'd0 : 6'b111111;
+            STRAIGHT: led_middle = 6'b001100;
+            default:led_left = 6'd0;
         endcase
     end
+    assign LED = {led_left,1'd0, led_middle ,1'd0,led_right};
 
 
   // Senser module
