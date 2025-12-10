@@ -39,7 +39,7 @@ module mainModule(
     localparam [4:0]COUNT = 5'd2;
     localparam [4:0]STRAIGHT = 5'd3;
     localparam [4:0]CHOOSE = 5'd4;
-    // localparam [4:0]LEFT = 5'd5;
+    localparam [4:0]TURN_LEFT = 5'd5;
     // localparam [4:0]RIGHT = 5'd6;
     // localparam [4:0]BACK = 5'd7;
     // localparam [4:0]STOP = 5'd8;
@@ -123,14 +123,16 @@ module mainModule(
             //        TURN_ROAD111: nextState = TURN_STRAIGHT;
             //     endcase
             // end
-            // TURN_LEFT: begin 
-            //     case(detect)
-            //        ERROR_ROAD: nextState = TURN_LEFT;
-            //        RIGHT_ROAD:nextState = TURN_LEFT;
-            //        RIGHT_LITTLE_ROAD:nextState = TURN_LEFT;
-            //        LEFT_ROAD:nextState = TURN_LEFT;
-            //        LEFT_LITTLE_ROAD:nextState = TURN_LEFT;
-            //        STRAIGHT_ROAD:nextState = TURN_LEFT;
+            TURN_LEFT: begin 
+                case(detect)
+                   ERROR_ROAD: nextState = TURN_LEFT;
+                   RIGHT_ROAD:nextState = TURN_LEFT;
+                   RIGHT_LITTLE_ROAD:nextState = TURN_LEFT;
+                   LEFT_ROAD:nextState = TURN_LEFT;
+                   LEFT_LITTLE_ROAD:nextState = TURN_LEFT;
+                   STRAIGHT_ROAD:nextState = TURN_LEFT;
+                endcase
+            end
 
 
             //        TURN_ROAD101:begin
@@ -148,6 +150,8 @@ module mainModule(
             default : nextState = state;
         endcase
     end
+
+  
   
   // led display
     // led right 3: show detect info
