@@ -30,6 +30,8 @@ module motor(
     localparam [4:0]STOP = 5'd30;
     localparam [4:0]ERROR = 5'd31;
 
+    reg turnEn;
+    wire turnFinish;
 
     always@(posedge clk,posedge rst)begin
         if(rst)begin
@@ -39,6 +41,7 @@ module motor(
             l_IN <= 2'b10;
         end
         else begin
+            turnEn <= 0;
             case(mode)
                 IDLE: begin
                     left_motor <= 0;
@@ -76,11 +79,29 @@ module motor(
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
+                TURN_LEFT:begin
+                    turnEn <= 1;
+                    r_IN <= 2'b01;
+                    l_IN <= 2'b10; 
+                    if(turnFinish)begin
+                        left_motor <= 10'd700;
+                        right_motor <= 10'd700;
+                    end else begin
+                        left_motor <= 0;
+                        right_motor <= 0;
+
+                    end
+
+                end
             endcase
         end
     end
     
-
+    counter #(.timeLength(1)) t1(
+        .clk(clk),
+        .en(turnEn),
+        .finish(turnFinish)
+    );
     
 endmodule
 
