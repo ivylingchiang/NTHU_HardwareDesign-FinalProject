@@ -47,4 +47,9 @@
 [Simon]
   1. add "TURN_LEFT" state
   2. add new "counter" module
+
+```
+```
+[ivy - pm 11:40]
+  1. Create test dirctory for testing verilog file.   
 ```
