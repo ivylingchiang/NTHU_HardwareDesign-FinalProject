@@ -46,5 +46,5 @@
 ```
 [Simon]
   1. add "TURN_LEFT" state
-  2. add new "counter" modules
+  2. add new "counter" module
 ```
