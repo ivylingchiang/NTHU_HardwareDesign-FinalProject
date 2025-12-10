@@ -14,7 +14,7 @@ module mainModule(
     output IN4,
     output left_pwm,
     output right_pwm
-);
+  );
   // Wire, Reg signal
     reg [4:0]state, nextState;
     wire [2:0]detect;
@@ -42,7 +42,8 @@ module mainModule(
     localparam [4:0]LEFT = 5'd5;
     localparam [4:0]RIGHT = 5'd6;
     localparam [4:0]BACK = 5'd7;
-    localparam [4:0]STOP = 5'd8;
+    localparam [4:0]BACK_LEFT = 5'd8;
+    localparam [4:0]STOP = 5'd30;
     localparam [4:0]ERROR = 5'd31;
 
   // Counter signal
@@ -50,101 +51,169 @@ module mainModule(
     wire flash;
     wire countFinish;
     clockDriver cD( .clk(clk), .countEnable(countEnable), .countFinish(countFinish), .flash(flash));
-    reg checkPoint1;
+    wire countSTOP = (state == STOP) ? 1:0;
+    wire reSTART;
+    reg [4:0]transitionState;
+    clockDriver1 cD1( .clk(clk), .countEnable(countSTOP), .flash(reSTART));
+    
+  // Checkpoint setting
+    // cp1: from straight(111) to choose(111)
+    // cp2: from left(111) to straight(111)
+    // cp3: from stop(111) to left(111)
+    // cp4: from stop(111) to right(111)
+    reg checkPoint1,checkPoint2,checkPoint3,checkPoint4;
     always @(posedge clk or posedge rst) begin
-        if(rst)
+        if(rst) begin
             checkPoint1 <= 0;
-        else if(state == CHOOSE && detect == 3'b000)
-            checkPoint1 <= 1;
-        else if(state != CHOOSE)
-            checkPoint1 <= 0;
+            checkPoint2 <= 0;
+            checkPoint3 <= 0;
+            checkPoint4 <= 0;
+        end else begin
+            // straight -> choose(only detect 000)
+            if(state == CHOOSE && detect == 3'b000) 
+                checkPoint1 <= 1;
+            else if(state != CHOOSE)checkPoint1 <= 0;
+            
+            // left -> straight(may detect 010 or 000)
+            if (state == STRAIGHT && detect != 3'b111) checkPoint2 <= 1;
+            else if(state != STRAIGHT)checkPoint2 <= 0;      
+
+            // back/stop -> left(may detect anything)     
+            if(state == LEFT && detect != 3'b111) checkPoint3 <= 1;
+            else if(state != LEFT) checkPoint3 <= 0;
+
+            // back/stop -> right (may detect anything) 
+            if(state == RIGHT && detect != 3'b111)checkPoint4 <= 1;
+            else if(state != RIGHT) checkPoint4<=0;
+
+        end
     end
 
   // Turn detect, record signal
     // reg [1:0]turnDirection;
     // reg [31:0]turnRecord; // stake
+    // TODO
+    reg [1:0]pop;
     
 
-  // FSM transform  
+  // FSM transform sequencial
     always @(posedge clk or posedge clk)begin
         if(rst || sw[0] == 0) state <= IDLE;
         else state <= nextState;
     end
-    
+    reg [1:0]counterRight;
+    reg DoneRight;
+    always @(posedge clk)begin
+        if(state == RIGHT && detect == 3'b111)begin
+            counterRight <= counterRight +1;
+            if(counterRight >= 2) DoneRight <= 1;
+        end else if(state != RIGHT) begin 
+            counterRight <= 0;
+            DoneRight <= 0;
+        end
+    end
+  // FSM transform combination
     always @(*)begin
         case(state)
             IDLE: nextState = (sw[0])? START : IDLE;
+            
             START: nextState = (detect == 3'b010) ? COUNT : START;
+            
             COUNT: nextState = (countFinish) ? STRAIGHT: COUNT;
+            
             STRAIGHT:begin
                 case(detect)
-                   ERROR_ROAD: nextState = STRAIGHT;
-                   RIGHT_ROAD: nextState = ERROR;
-                   RIGHT_LITTLE_ROAD: nextState = ERROR;
-                   LEFT_ROAD: nextState = ERROR;
-                   LEFT_LITTLE_ROAD: nextState = ERROR;
-
-
-                   STRAIGHT_ROAD: nextState = STRAIGHT;
-                   TURN_ROAD111: nextState = CHOOSE;
-                   TURN_ROAD101: nextState = ERROR; // Turn 之前不會遇到101 detect
-                   default : nextState = STRAIGHT;
+                   // ERROR STATE(5)
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD: nextState = ERROR;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD: nextState = ERROR;
+                    TURN_ROAD101: nextState = ERROR;
+                   // Transform state(2)
+                   // TODO: STRAIGHT -> BACK (need insert STOP betweem two state)
+                    ERROR_ROAD: begin 
+                        nextState =  STOP;
+                        transitionState = BACK;
+                    end
+                    TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
+                   // Nothing Change(1)
+                    STRAIGHT_ROAD: nextState = STRAIGHT;                  
+                    default : nextState = STRAIGHT;
                 endcase
             end
-            CHOOSE: begin 
+            
+            CHOOSE: begin  // find 下一個檢查點
                 case(detect)
-                   ERROR_ROAD: nextState = CHOOSE;
-                   RIGHT_ROAD:nextState = CHOOSE;
-                   RIGHT_LITTLE_ROAD:nextState = CHOOSE;
-                   LEFT_ROAD:nextState = CHOOSE;
-                   LEFT_LITTLE_ROAD:nextState = CHOOSE;
-                   STRAIGHT_ROAD: nextState = CHOOSE;
-
-
-                   TURN_ROAD101: nextState = CHOOSE; 
-                   TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                   // ERROR STATE(5)
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = ERROR;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = ERROR;
+                    STRAIGHT_ROAD: nextState = ERROR;
+                   // Transform state(2)
+                    TURN_ROAD101: nextState = LEFT;
+                    TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                   // Nothing Change(1)
+                    ERROR_ROAD: nextState = CHOOSE;
                     default :  nextState = CHOOSE;
                 endcase
             end
-            // TURN_STRAIGHT:begin // straight
-            //     // TODO: Update stack: input 1
-            //     case(detect)
-            //        ERROR_ROAD: nextState = ERROR;
-            //        // TODO: back forward
-            //        // TODO: pop(), backforward to checkpoint, turn to TURN state 
-            //        RIGHT_ROAD:nextState = TURN_STRAIGHT;
-            //        RIGHT_LITTLE_ROAD:nextState = TURN_STRAIGHT;
-            //        LEFT_ROAD:nextState = TURN_STRAIGHT;
-            //        LEFT_LITTLE_ROAD:nextState = TURN_STRAIGHT;
-            //        STRAIGHT_ROAD:nextState = TURN_STRAIGHT;
 
+            LEFT:begin
+                case(detect)
+                   // ERROR STATE(0)
+                    
+                   // Transform state(2)
+                    TURN_ROAD101: nextState = RIGHT;
+                    TURN_ROAD111: nextState = (checkPoint3)? STRAIGHT : LEFT;
+                   // Nothing Change(6)
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = LEFT;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = LEFT;
+                    STRAIGHT_ROAD: nextState = LEFT;
+                    ERROR_ROAD: nextState = LEFT;
+                    default :  nextState = LEFT;
+                endcase
+            end
+            
+            RIGHT:begin
+                case(detect)
+                   // ERROR STATE(0)                    
+                   // Transform state(2)
+                    TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
+                    TURN_ROAD111: nextState = (checkPoint4 && DoneRight)? STRAIGHT : RIGHT;
+                   // Nothing Change(6)
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = RIGHT;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = RIGHT;
+                    STRAIGHT_ROAD: nextState = RIGHT;
+                    ERROR_ROAD: nextState = RIGHT;
+                    default :  nextState = RIGHT;
+                endcase
+            end
+            
+            BACK:begin
+                case(detect)
+                   // ERROR STATE(6)
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = ERROR;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = ERROR;
+                    ERROR_ROAD: nextState = ERROR;
+                    TURN_ROAD101: nextState = ERROR;
+                    
+                   // Transform state(1)
+                    TURN_ROAD111: begin
+                        if(pop==2'd0)begin
+                            nextState = STOP;
+                            transitionState = LEFT;
+                        end else if(pop==2'd1) begin
+                            nextState = STOP;
+                            transitionState = RIGHT;
+                        end
+                    end
+                   // Nothing Change(1)
+                    STRAIGHT_ROAD: nextState = BACK;
+                    default :  nextState = BACK;
+                endcase
+            end
 
-            //        TURN_ROAD101: nextState = ERROR;
-            //        TURN_ROAD111: nextState = TURN_STRAIGHT;
-            //     endcase
-            // end
-            // TURN_LEFT: begin 
-            //     case(detect)
-            //        ERROR_ROAD: nextState = TURN_LEFT;
-            //        RIGHT_ROAD:nextState = TURN_LEFT;
-            //        RIGHT_LITTLE_ROAD:nextState = TURN_LEFT;
-            //        LEFT_ROAD:nextState = TURN_LEFT;
-            //        LEFT_LITTLE_ROAD:nextState = TURN_LEFT;
-            //        STRAIGHT_ROAD:nextState = TURN_LEFT;
-
-
-            //        TURN_ROAD101:begin
-            //         // TODO: back forward
-            //         // TODO: pop(), backforward to checkpoint, turn to TURN_RIGHT
-            //        end
-            //        TURN_ROAD111: begin
-            //         // TODO: Update stack 
-            //         nextState = STRAIGHT;
-            //        end
-            //         // straight
-            //     endcase
-            // end
+            STOP:nextState = (reSTART)?transitionState : STOP;
+                       
             ERROR: nextState = (~sw[0]) ? IDLE : ERROR;
+            
             default : nextState = state;
         endcase
     end
@@ -208,8 +277,6 @@ module mainModule(
         endcase
     end
     assign LED = {led_left,1'd0, led_middle ,1'd0,led_right};
-
-
   // Senser module
     motor A(
         .clk(clk),
