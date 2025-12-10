@@ -40,3 +40,11 @@
         
   4. Update "flow" led display of the CHOOSE state
 ```
+
+## 20251210
+
+```
+[Simon]
+  1. add "TURN_LEFT" state
+  2. add new "counter" modules
+```
