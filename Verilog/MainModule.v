@@ -106,46 +106,6 @@ module mainModule(
                     default :  nextState = CHOOSE;
                 endcase
             end
-            // TURN_STRAIGHT:begin // straight
-            //     // TODO: Update stack: input 1
-            //     case(detect)
-            //        ERROR_ROAD: nextState = ERROR;
-            //        // TODO: back forward
-            //        // TODO: pop(), backforward to checkpoint, turn to TURN state 
-            //        RIGHT_ROAD:nextState = TURN_STRAIGHT;
-            //        RIGHT_LITTLE_ROAD:nextState = TURN_STRAIGHT;
-            //        LEFT_ROAD:nextState = TURN_STRAIGHT;
-            //        LEFT_LITTLE_ROAD:nextState = TURN_STRAIGHT;
-            //        STRAIGHT_ROAD:nextState = TURN_STRAIGHT;
-
-
-            //        TURN_ROAD101: nextState = ERROR;
-            //        TURN_ROAD111: nextState = TURN_STRAIGHT;
-            //     endcase
-            // end
-            TURN_LEFT: begin 
-                case(detect)
-                   ERROR_ROAD: nextState = TURN_LEFT;
-                   RIGHT_ROAD:nextState = TURN_LEFT;
-                   RIGHT_LITTLE_ROAD:nextState = TURN_LEFT;
-                   LEFT_ROAD:nextState = TURN_LEFT;
-                   LEFT_LITTLE_ROAD:nextState = TURN_LEFT;
-                   STRAIGHT_ROAD:nextState = TURN_LEFT;
-                endcase
-            end
-
-
-            //        TURN_ROAD101:begin
-            //         // TODO: back forward
-            //         // TODO: pop(), backforward to checkpoint, turn to TURN_RIGHT
-            //        end
-            //        TURN_ROAD111: begin
-            //         // TODO: Update stack 
-            //         nextState = STRAIGHT;
-            //        end
-            //         // straight
-            //     endcase
-            // end
             ERROR: nextState = (~sw[0]) ? IDLE : ERROR;
             default : nextState = state;
         endcase
