@@ -8,7 +8,7 @@ module clockDriver1(
 
   always @(posedge clk) begin
     if (countEnable) begin
-      if (num >= 10_000_000 - 1) begin
+      if (num >= 50_000_000 - 1) begin
         num <= 0;
         flash <= 1;
       end else begin

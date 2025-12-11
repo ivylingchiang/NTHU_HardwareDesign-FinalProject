@@ -126,12 +126,19 @@ module mainModule(
                     num0 = 4'd0;
                     num1 = 4'd0;
                     num2 = 4'd0;
-                    num3 = 4'd0;
+                    case(transitionState)
+                        IDLE: num3 = 4'd12;
+                        STRAIGHT: num3 = 4'd0;
+                        LEFT: num3 = 4'd13;
+                        RIGHT: num3 = 4'd15;
+                        BACK: num3 = 4'd13;
+                        default : num3 = 4'd15;
+                    endcase
                 end
 
 
                 STOP: begin
-                    num0 = 4'd0;
+                    num0 = (reSTART)? 4'd1 : 4'd0;
                     num1 = 4'd0;
                     num2 = 4'd0;
                     case(transitionState)
