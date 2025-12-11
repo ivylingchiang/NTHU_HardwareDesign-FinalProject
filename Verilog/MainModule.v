@@ -63,7 +63,6 @@ module mainModule(
     wire flashBack;
     wire backEn = (state == BACK) ? 1:0;
     clockDriver2 cD2( .clk(clk), .countEnable(backEn), .flash(flashBack));
-    reg begining;
   
   // Checkpoint setting
     // cp1: from straight(111) to choose(111)
@@ -153,7 +152,6 @@ module mainModule(
                 checkPoint2 <= 0;
                 checkPoint3 <= 0;
                 checkPoint4 <= 0;
-                begining <= 0;
                 
             end else begin
 
@@ -164,8 +162,8 @@ module mainModule(
                 else if(state != CHOOSE)checkPoint1 <= 0;
                 
                 // left -> straight(may detect 010 or 000)
-                if ((lastState == COUNT) || (state == (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT) && detect != 3'b111)) checkPoint2 <= 1;
-                else if( state != (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT))checkPoint2 <= 0;      
+                if ((lastState == COUNT) || ((state == (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT) && detect != 3'b111))) checkPoint2 <= 1;
+                else if(state != (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT))checkPoint2 <= 0;      
 
                 // back/stop -> left(may detect anything)     
                 if(state == LEFT && detect != 3'b111) 
@@ -176,8 +174,6 @@ module mainModule(
                 if(state == RIGHT && detect != 3'b111)checkPoint4 <= 1;
                 else if(state != RIGHT) checkPoint4<=0;
 
-                // change begining
-                if(state == STRAIGHT && begining == 0)begining <= 1;
 
             end
         end
