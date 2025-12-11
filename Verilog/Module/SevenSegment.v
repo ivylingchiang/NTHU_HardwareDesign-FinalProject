@@ -63,7 +63,10 @@ module SevenSegment(
 				8 : display = 7'b0000000;   //1000
 				9 : display = 7'b0010000;	 //1001
 				10: display = 7'b1000110; // C
-				11: display = 7'b0111111; // -
+        11: display = 7'b0111111; // -
+        12: display = 7'b0100001 ; //d
+        13: display = 7'b1000111 ; //L
+        14: display = 7'b0000110 ; //E
 
 			default : display = 7'b1111111; //nothing
     	endcase
