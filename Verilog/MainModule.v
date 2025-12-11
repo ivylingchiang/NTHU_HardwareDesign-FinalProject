@@ -40,9 +40,9 @@ module mainModule(
     localparam [4:0]STRAIGHT = 5'd3;
     localparam [4:0]CHOOSE = 5'd4;
     localparam [4:0]TURN_LEFT = 5'd5;
-    // localparam [4:0]RIGHT = 5'd6;
-    // localparam [4:0]BACK = 5'd7;
-    // localparam [4:0]STOP = 5'd8;
+    localparam [4:0]RIGHT = 5'd6;
+    localparam [4:0]BACK = 5'd7;
+    localparam [4:0]STOP = 5'd30;
     localparam [4:0]ERROR = 5'd31;
 
   // Counter signal
@@ -50,23 +50,55 @@ module mainModule(
     wire flash;
     wire countFinish;
     clockDriver cD( .clk(clk), .countEnable(countEnable), .countFinish(countFinish), .flash(flash));
-    reg checkPoint1;
+    wire countSTOP = (state == STOP) ? 1:0;
+    wire reSTART;
+    reg [4:0]transitionState;
+    clockDriver1 cD1( .clk(clk), .countEnable(countSTOP), .flash(reSTART));
+    wire flashBack;
+    wire backEn = (state == BACK) ? 1:0;
+    clockDriver2 cD2( .clk(clk), .countEnable(backEn), .flash(flashBack));
+    // Checkpoint setting
+    // cp1: from straight(111) to choose(111)
+    // cp2: from left(111) to straight(111)
+    // cp3: from stop(111) to left(111)
+    // cp4: from stop(111) to right(111)
+    reg checkPoint1,checkPoint2,checkPoint3,checkPoint4;
     always @(posedge clk or posedge rst) begin
-        if(rst)
+        if(rst) begin
             checkPoint1 <= 0;
-        else if(state == CHOOSE && detect == 3'b000)
-            checkPoint1 <= 1;
-        else if(state != CHOOSE)
-            checkPoint1 <= 0;
+            checkPoint2 <= 0;
+            checkPoint3 <= 0;
+            checkPoint4 <= 0;
+        end else begin
+            // straight -> choose(only detect 000)
+            if(state == CHOOSE && detect == 3'b000) 
+                checkPoint1 <= 1;
+            else if(state != CHOOSE)checkPoint1 <= 0;
+            
+            // left -> straight(may detect 010 or 000)
+            if (state == STRAIGHT && detect != 3'b111) checkPoint2 <= 1;
+            else if(state != STRAIGHT)checkPoint2 <= 0;      
+
+            // back/stop -> left(may detect anything)     
+            if(state == LEFT && detect != 3'b111) checkPoint3 <= 1;
+            else if(state != LEFT) checkPoint3 <= 0;
+
+            // back/stop -> right (may detect anything) 
+            if(state == RIGHT && detect != 3'b111)checkPoint4 <= 1;
+            else if(state != RIGHT) checkPoint4<=0;
+
+        end
     end
 
   // Turn detect, record signal
     // reg [1:0]turnDirection;
     // reg [31:0]turnRecord; // stake
+    // TODO
+    reg [1:0]pop;
     
 
   // FSM transform  
-    always @(posedge clk or posedge clk)begin
+    always @(posedge clk or posedge rst)begin
         if(rst || sw[0] == 0) state <= IDLE;
         else state <= nextState;
     end
