@@ -338,7 +338,7 @@ module mainModule(
             LEFT: led_middle = 6'b110000;
             STOP: led_middle = 6'b111111;
             BACK: led_middle = (flashBack) ? 6'd0:6'b111111;
-            default:led_left = 6'd0;
+            default:led_middle = 6'd0;
         endcase
     end
     assign LED = {led_left,1'd0, led_middle ,1'd0,led_right};
