@@ -70,6 +70,7 @@ module mainModule(
     // cp3: from stop(111) to left(111)
     // cp4: from stop(111) to right(111)
         reg checkPoint1,checkPoint2,checkPoint3,checkPoint4;
+        wire [4:0]storeState = transitionState;
         reg [3:0]num0, num1, num2, num3;
         always @(*)begin
             case(state)
@@ -126,7 +127,7 @@ module mainModule(
                     num0 = 4'd0;
                     num1 = 4'd0;
                     num2 = 4'd0;
-                    case(transitionState)
+                    case(storeState)
                         IDLE: num3 = 4'd12;
                         STRAIGHT: num3 = 4'd0;
                         LEFT: num3 = 4'd13;
@@ -141,7 +142,7 @@ module mainModule(
                     num0 = (reSTART)? 4'd1 : 4'd0;
                     num1 = 4'd0;
                     num2 = 4'd0;
-                    case(transitionState)
+                    case(storeState)
                         IDLE: num3 = 4'd12;
                         STRAIGHT: num3 = 4'd0;
                         LEFT: num3 = 4'd13;
@@ -236,7 +237,7 @@ module mainModule(
     //         end           
     //     end
     // end
-    wire [4:0]storeState = transitionState; 
+     
     always @(*)begin
         case(state)
             IDLE: nextState = (sw[0])? START : IDLE;
