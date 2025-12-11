@@ -157,15 +157,15 @@ module mainModule(
                 
             end else begin
 
-                if(state == IDLE) begining <= 0;
+                // if(state == IDLE) begining <= 0;
                 // straight -> choose(only detect 000)
                 if(state == CHOOSE && detect != 3'b111) 
                     checkPoint1 <= 1;
                 else if(state != CHOOSE)checkPoint1 <= 0;
                 
                 // left -> straight(may detect 010 or 000)
-                if ((!begining) || (state == (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT) && detect != 3'b111)) checkPoint2 <= 1;
-                else if(state != (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT))checkPoint2 <= 0;      
+                if ((lastState == COUNT) || (state == (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT) && detect != 3'b111)) checkPoint2 <= 1;
+                else if( state != (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT))checkPoint2 <= 0;      
 
                 // back/stop -> left(may detect anything)     
                 if(state == LEFT && detect != 3'b111) 
