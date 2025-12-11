@@ -162,8 +162,8 @@ module mainModule(
                 else if(state != CHOOSE)checkPoint1 <= 0;
                 
                 // left -> straight(may detect 010 or 000)
-                if ((lastState == COUNT) || ((state == (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT) && detect != 3'b111))) checkPoint2 <= 1;
-                else if(state != (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT))checkPoint2 <= 0;      
+                if ((lastState == COUNT) || (((state == STRAIGHT) || (state == LITTLE_LEFT) || (state ==  LITTLE_RIGHT) ) && (detect != 3'b111))) checkPoint2 <= 1;
+                else if(state != STRAIGHT && state != LITTLE_LEFT && state != LITTLE_RIGHT)checkPoint2 <= 0;      
 
                 // back/stop -> left(may detect anything)     
                 if(state == LEFT && detect != 3'b111) 
