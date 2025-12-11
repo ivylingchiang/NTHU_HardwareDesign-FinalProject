@@ -141,3 +141,24 @@ localparam [4:0]LITTLE_RIGHT = 5'd9;
 localparam [4:0]STOP = 5'd30;
 localparam [4:0]ERROR = 5'd31;
 ```
+
+
+* Seven Segment Setting
+```
+0 : display = 7'b1000000;	//0000
+1 : display = 7'b1111001;   //0001
+2 : display = 7'b0100100;   //0010
+3 : display = 7'b0110000;   //0011
+4 : display = 7'b0011001;   //0100
+5 : display = 7'b0010010;   //0101
+6 : display = 7'b0000010;   //0110
+7 : display = 7'b1111000;   //0111
+8 : display = 7'b0000000;   //1000
+9 : display = 7'b0010000;	 //1001
+
+10: display = 7'b1000110; // C
+11: display = 7'b0111111; // -
+12: display = 7'b0100001 ; //d
+13: display = 7'b1000111 ; //L
+14: display = 7'b0000110 ; //E
+``` 

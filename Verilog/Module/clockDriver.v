@@ -2,11 +2,13 @@ module clockDriver(
   input wire clk,
   input wire countEnable,
   output reg countFinish = 0,
-  output reg flash = 0
+  output reg flash = 0,
+  output wire [1:0]countDetail
   );
 
   reg [31:0] num = 0;
   reg [1:0] counter = 0;
+  assign countDetail = counter;
 
   always @(posedge clk) begin
     if (countEnable) begin
