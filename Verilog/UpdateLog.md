@@ -117,12 +117,12 @@ git merge main
 * Detecter(0: white; 1: black)
 ```
 localparam [2:0]ERROR_ROAD = 3'b000;
-localparam [2:0]RIGHT_ROAD = 3'b001;
+localparam [2:0]RIGHT_ROAD = 3'b011;
 localparam [2:0]STRAIGHT_ROAD = 3'b010;
-localparam [2:0]RIGHT_LITTLE_ROAD = 3'b011;
-localparam [2:0]LEFT_ROAD = 3'b100;
+localparam [2:0]RIGHT_LITTLE_ROAD = 3'b001;
+localparam [2:0]LEFT_ROAD = 3'b110;
 localparam [2:0]TURN_ROAD101 = 3'b101;
-localparam [2:0]LEFT_LITTLE_ROAD = 3'b110;
+localparam [2:0]LEFT_LITTLE_ROAD = 3'b100;
 localparam [2:0]TURN_ROAD111 = 3'b111;
 ```
 
@@ -136,6 +136,8 @@ localparam [4:0]CHOOSE = 5'd4;
 localparam [4:0]LEFT = 5'd5;
 localparam [4:0]RIGHT = 5'd6;
 localparam [4:0]BACK = 5'd7;
+localparam [4:0]LITTLE_LEFT = 5'd8;
+localparam [4:0]LITTLE_RIGHT = 5'd9;
 localparam [4:0]STOP = 5'd30;
 localparam [4:0]ERROR = 5'd31;
 ```

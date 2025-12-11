@@ -16,16 +16,16 @@ module mainModule(
     output right_pwm
   );
   // Wire, Reg signal
-    reg [4:0]state, nextState;
+    reg [4:0]state, nextState, lastState;
     wire [2:0]detect;
     wire [19:0] distance;
     localparam [2:0]ERROR_ROAD = 3'b000;
-    localparam [2:0]RIGHT_ROAD = 3'b001;
+    localparam [2:0]RIGHT_ROAD = 3'b011;
     localparam [2:0]STRAIGHT_ROAD = 3'b010;
-    localparam [2:0]RIGHT_LITTLE_ROAD = 3'b011;
-    localparam [2:0]LEFT_ROAD = 3'b100;
+    localparam [2:0]RIGHT_LITTLE_ROAD = 3'b001;
+    localparam [2:0]LEFT_ROAD = 3'b110;
     localparam [2:0]TURN_ROAD101 = 3'b101;
-    localparam [2:0]LEFT_LITTLE_ROAD = 3'b110;
+    localparam [2:0]LEFT_LITTLE_ROAD = 3'b100;
     localparam [2:0]TURN_ROAD111 = 3'b111;
 
   // debounce, one pulse
@@ -42,6 +42,8 @@ module mainModule(
     localparam [4:0]LEFT = 5'd5;
     localparam [4:0]RIGHT = 5'd6;
     localparam [4:0]BACK = 5'd7;
+    localparam [4:0]LITTLE_LEFT = 5'd8;
+    localparam [4:0]LITTLE_RIGHT = 5'd9;
     localparam [4:0]STOP = 5'd30;
     localparam [4:0]ERROR = 5'd31;
 
@@ -77,8 +79,8 @@ module mainModule(
             else if(state != CHOOSE)checkPoint1 <= 0;
             
             // left -> straight(may detect 010 or 000)
-            if (state == STRAIGHT && detect != 3'b111) checkPoint2 <= 1;
-            else if(state != STRAIGHT)checkPoint2 <= 0;      
+            if (state == (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT) && detect != 3'b111) checkPoint2 <= 1;
+            else if(state != (STRAIGHT||LITTLE_LEFT||LITTLE_RIGHT))checkPoint2 <= 0;      
 
             // back/stop -> left(may detect anything)     
             if(state == LEFT && detect != 3'b111) checkPoint3 <= 1;
@@ -101,7 +103,10 @@ module mainModule(
   // FSM transform sequencial
     always @(posedge clk or posedge rst)begin
         if(rst || sw[0] == 0) state <= IDLE;
-        else state <= nextState;
+        else begin
+            state <= nextState;
+            lastState <= state;
+        end
     end
     reg [1:0]counterRight;
     reg DoneRight;
@@ -134,8 +139,9 @@ module mainModule(
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
                    // Nothing Change(6)
-                    RIGHT_ROAD, RIGHT_LITTLE_ROAD: nextState = STRAIGHT;
-                    LEFT_ROAD, LEFT_LITTLE_ROAD: nextState = STRAIGHT;
+                    RIGHT_ROAD, LEFT_ROAD: nextState = STRAIGHT;
+                    RIGHT_LITTLE_ROAD: nextState = LITTLE_RIGHT;
+                    LEFT_LITTLE_ROAD: nextState = LITTLE_LEFT;
                     TURN_ROAD101: nextState = STRAIGHT;
                     STRAIGHT_ROAD: nextState = STRAIGHT;                  
                     default : nextState = STRAIGHT;
@@ -184,6 +190,26 @@ module mainModule(
                     default :  nextState = LEFT;
                 endcase
             end
+
+            LITTLE_LEFT:begin
+                case(detect)
+                   // ERROR STATE(0)
+                    
+                   // Transform state(2)
+                    ERROR_ROAD: begin 
+                        nextState =  STOP;
+                        transitionState = BACK;
+                    end
+                    TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
+                   // Nothing Change(6)
+                    RIGHT_ROAD, LEFT_ROAD: nextState = STRAIGHT;
+                    RIGHT_LITTLE_ROAD: nextState = LITTLE_RIGHT;
+                    LEFT_LITTLE_ROAD: nextState = LITTLE_LEFT;
+                    TURN_ROAD101: nextState = STRAIGHT;
+                    STRAIGHT_ROAD: nextState = STRAIGHT;                  
+                    default :  nextState = LITTLE_LEFT;
+                endcase
+            end
             
             RIGHT:begin
                 case(detect)
@@ -204,6 +230,26 @@ module mainModule(
                     default :  nextState = RIGHT;
                 endcase
             end
+            LITTLE_RIGHT:begin
+                case(detect)
+                   // ERROR STATE(0)
+                    
+                   // Transform state(2)
+                    ERROR_ROAD: begin 
+                        nextState =  STOP;
+                        transitionState = BACK;
+                    end
+                    TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
+                   // Nothing Change(6)
+                    RIGHT_ROAD, LEFT_ROAD: nextState = STRAIGHT;
+                    RIGHT_LITTLE_ROAD: nextState = LITTLE_RIGHT;
+                    LEFT_LITTLE_ROAD: nextState = LITTLE_LEFT;
+                    TURN_ROAD101: nextState = STRAIGHT;
+                    STRAIGHT_ROAD: nextState = STRAIGHT;                  
+                    default :  nextState = LITTLE_RIGHT;
+                endcase
+            end
+
             
             BACK:begin
                 case(detect)
@@ -243,12 +289,12 @@ module mainModule(
         always @(*)begin
             case(detect)
                 ERROR_ROAD: led_right = 3'b000;
-                RIGHT_ROAD: led_right = 3'b001;
+                RIGHT_ROAD: led_right = 3'b011;
                 STRAIGHT_ROAD: led_right = 3'b010;
-                RIGHT_LITTLE_ROAD: led_right = 3'b011;
-                LEFT_ROAD: led_right = 3'b100;
+                RIGHT_LITTLE_ROAD: led_right = 3'b001;
+                LEFT_ROAD: led_right = 3'b110;
                 TURN_ROAD101: led_right = 3'b101;
-                LEFT_LITTLE_ROAD: led_right = 3'b110;
+                LEFT_LITTLE_ROAD: led_right = 3'b100;
                 TURN_ROAD111: led_right = 3'b111;
                 default : led_right = 3'b000;
             endcase
@@ -309,6 +355,7 @@ module mainModule(
         .clk(clk),
         .rst(rst),
         .mode(state),
+        .lastMode(lastState),
         .pwm({left_pwm, right_pwm}),
         .l_IN({IN1, IN2}),
         .r_IN({IN3, IN4})

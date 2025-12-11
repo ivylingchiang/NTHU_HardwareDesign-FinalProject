@@ -5,6 +5,7 @@ module motor(
     input clk,
     input rst,
     input [4:0]mode,
+    input [4:0] lastMode,
     output [1:0]pwm,
     output reg [1:0]r_IN,
     output reg [1:0]l_IN
@@ -27,6 +28,8 @@ module motor(
     localparam [4:0]LEFT = 5'd5;
     localparam [4:0]RIGHT = 5'd6;
     localparam [4:0]BACK = 5'd7;
+    localparam [4:0]LITTLE_LEFT = 5'd8;
+    localparam [4:0]LITTLE_RIGHT = 5'd9;
     localparam [4:0]STOP = 5'd30;
     localparam [4:0]ERROR = 5'd31;
     
@@ -85,11 +88,23 @@ module motor(
                     r_IN <= 2'b10;
                     l_IN <= 2'b01; 
                 end
+                LITTLE_LEFT:begin
+                    left_motor <= 10'd700;
+                    right_motor <= 10'd800;
+                    r_IN <= 2'b10;
+                    l_IN <= 2'b10; 
+                end
 
                 RIGHT:begin
                     left_motor <= 10'd750;
                     right_motor <= 10'd750;
                     r_IN <= 2'b01;
+                    l_IN <= 2'b10; 
+                end
+                LITTLE_RIGHT:begin
+                    left_motor <= 10'd800;
+                    right_motor <= 10'd700;
+                    r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
 
