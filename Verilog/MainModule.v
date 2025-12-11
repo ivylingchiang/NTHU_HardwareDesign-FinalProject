@@ -191,9 +191,6 @@ module mainModule(
             end
         end
 
-  // Turn detect, record signal
-    // reg [1:0]turnDirection;
-    // reg [31:0]turnRecord; // stake
     // TODO
     wire [1:0]pop = 2'd0;
 
@@ -216,27 +213,6 @@ module mainModule(
             DoneRight <= 0;
         end
     end
-    // always @(posedge clk)begin
-    //     if(rst)begin
-    //        transitionState <= IDLE; 
-    //     end else begin
-    //         if((state == STRAIGHT || state ==LITTLE_LEFT || state ==LITTLE_RIGHT) && detect == ERROR_ROAD)
-    //             transitionState <= BACK;
-    //         else if(state == CHOOSE && detect == TURN_ROAD101)
-    //             transitionState <= LEFT;
-    //         else if(state == LEFT)
-    //             if(detect == TURN_ROAD101)
-    //                 transitionState <= RIGHT;
-    //             else if (detect == TURN_ROAD111)
-    //                 transitionState <= STRAIGHT;
-    //         else if(state == RIGHT && detect == TURN_ROAD111)
-    //             transitionState <= STRAIGHT;
-    //         else if (state == BACK)begin
-    //             // TODO
-    //             transitionState <= LEFT;
-    //         end           
-    //     end
-    // end
      
     always @(*)begin
         case(state)
