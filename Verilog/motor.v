@@ -63,14 +63,14 @@ module motor(
                     l_IN <= 2'b10; 
                 end
                 STRAIGHT: begin
-                    left_motor <= 10'd800;
-                    right_motor <= 10'd800;
+                    left_motor <= 10'd750;
+                    right_motor <= 10'd750;
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
                 CHOOSE: begin
-                    left_motor <= 10'd800;
-                    right_motor <= 10'd800;
+                    left_motor <= 10'd750;
+                    right_motor <= 10'd750;
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
@@ -90,7 +90,7 @@ module motor(
                 end
                 LITTLE_LEFT:begin
                     left_motor <= 10'd700;
-                    right_motor <= 10'd800;
+                    right_motor <= 10'd750;
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
@@ -102,7 +102,7 @@ module motor(
                     l_IN <= 2'b10;
                 end
                 LITTLE_RIGHT:begin
-                    left_motor <= 10'd800;
+                    left_motor <= 10'd750;
                     right_motor <= 10'd700;
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 

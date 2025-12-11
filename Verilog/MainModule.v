@@ -156,6 +156,8 @@ module mainModule(
                 begining <= 0;
                 
             end else begin
+
+                if(state == IDLE) begining <= 0;
                 // straight -> choose(only detect 000)
                 if(state == CHOOSE && detect != 3'b111) 
                     checkPoint1 <= 1;
