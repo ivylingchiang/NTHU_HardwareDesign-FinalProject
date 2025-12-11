@@ -24,12 +24,11 @@ module motor(
     localparam [4:0]COUNT = 5'd2;
     localparam [4:0]STRAIGHT = 5'd3;
     localparam [4:0]CHOOSE = 5'd4;
-    localparam [4:0]ERROR = 5'd31;
-
     localparam [4:0]LEFT = 5'd5;
     localparam [4:0]RIGHT = 5'd6;
     localparam [4:0]BACK = 5'd7;
-    localparam [4:0]STOP = 5'd8;
+    localparam [4:0]STOP = 5'd30;
+    localparam [4:0]ERROR = 5'd31;
     
 
 
@@ -72,6 +71,7 @@ module motor(
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
+                
                 ERROR: begin
                     left_motor <= 0;
                     right_motor <= 0;
@@ -94,8 +94,8 @@ module motor(
                 end
 
                 BACK:begin
-                    left_motor <= 10'd800;
-                    right_motor <= 10'd800;
+                    left_motor <= 10'd750;
+                    right_motor <= 10'd750;
                     r_IN <= 2'b01;
                     l_IN <= 2'b01; 
                 end

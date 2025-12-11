@@ -1,16 +1,16 @@
-module clockDriver1(
+module clockDriver2(
   input wire clk,
   input wire countEnable,
-  output reg flash = 0
+  output reg flash
   );
 
   reg [31:0] num = 0;
 
   always @(posedge clk) begin
     if (countEnable) begin
-      if (num >= 50_000_000 - 1) begin
+      if (num >= 20_000_000 - 1) begin
         num <= 0;
-        flash <= 1;
+        flash <= ~flash;
       end else begin
         num <= num + 1;
       end

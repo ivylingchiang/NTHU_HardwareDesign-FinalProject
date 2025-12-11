@@ -42,7 +42,6 @@ module mainModule(
     localparam [4:0]LEFT = 5'd5;
     localparam [4:0]RIGHT = 5'd6;
     localparam [4:0]BACK = 5'd7;
-    localparam [4:0]BACK_LEFT = 5'd8;
     localparam [4:0]STOP = 5'd30;
     localparam [4:0]ERROR = 5'd31;
 
@@ -55,6 +54,9 @@ module mainModule(
     wire reSTART;
     reg [4:0]transitionState;
     clockDriver1 cD1( .clk(clk), .countEnable(countSTOP), .flash(reSTART));
+    wire flashBack;
+    wire backEn = (state == BACK) ? 1:0;
+    clockDriver2 cD2( .clk(clk), .countEnable(backEn), .flash(flashBack));
     
   // Checkpoint setting
     // cp1: from straight(111) to choose(111)
@@ -97,7 +99,7 @@ module mainModule(
     
 
   // FSM transform sequencial
-    always @(posedge clk or posedge clk)begin
+    always @(posedge clk or posedge rst)begin
         if(rst || sw[0] == 0) state <= IDLE;
         else state <= nextState;
     end
@@ -123,18 +125,18 @@ module mainModule(
             
             STRAIGHT:begin
                 case(detect)
-                   // ERROR STATE(5)
-                    RIGHT_ROAD, RIGHT_LITTLE_ROAD: nextState = ERROR;
-                    LEFT_ROAD, LEFT_LITTLE_ROAD: nextState = ERROR;
-                    TURN_ROAD101: nextState = ERROR;
+                   // ERROR STATE(0)
+                    
                    // Transform state(2)
-                   // TODO: STRAIGHT -> BACK (need insert STOP betweem two state)
                     ERROR_ROAD: begin 
                         nextState =  STOP;
                         transitionState = BACK;
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
-                   // Nothing Change(1)
+                   // Nothing Change(6)
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD: nextState = STRAIGHT;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD: nextState = STRAIGHT;
+                    TURN_ROAD101: nextState = STRAIGHT;
                     STRAIGHT_ROAD: nextState = STRAIGHT;                  
                     default : nextState = STRAIGHT;
                 endcase
@@ -142,15 +144,19 @@ module mainModule(
             
             CHOOSE: begin  // find 下一個檢查點
                 case(detect)
-                   // ERROR STATE(5)
-                    RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = ERROR;
-                    LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = ERROR;
-                    STRAIGHT_ROAD: nextState = ERROR;
+                   // ERROR STATE(0)
+                    
                    // Transform state(2)
-                    TURN_ROAD101: nextState = LEFT;
+                    TURN_ROAD101: begin
+                        nextState = STOP;
+                        transitionState = LEFT;
+                    end
                     TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
-                   // Nothing Change(1)
+                   // Nothing Change(6)
                     ERROR_ROAD: nextState = CHOOSE;
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = CHOOSE;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = CHOOSE;
+                    STRAIGHT_ROAD: nextState = CHOOSE;
                     default :  nextState = CHOOSE;
                 endcase
             end
@@ -160,8 +166,16 @@ module mainModule(
                    // ERROR STATE(0)
                     
                    // Transform state(2)
-                    TURN_ROAD101: nextState = RIGHT;
-                    TURN_ROAD111: nextState = (checkPoint3)? STRAIGHT : LEFT;
+                    TURN_ROAD101: begin
+                        nextState = STOP;
+                        transitionState = RIGHT;
+                    end
+                    TURN_ROAD111: begin
+                        if(checkPoint3)begin
+                            nextState = STOP;
+                            transitionState = STRAIGHT;
+                        end else nextState = LEFT;
+                    end
                    // Nothing Change(6)
                     RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = LEFT;
                     LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = LEFT;
@@ -176,7 +190,12 @@ module mainModule(
                    // ERROR STATE(0)                    
                    // Transform state(2)
                     TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
-                    TURN_ROAD111: nextState = (checkPoint4 && DoneRight)? STRAIGHT : RIGHT;
+                    TURN_ROAD111: begin
+                        if(checkPoint4 && DoneRight)begin
+                            transitionState = STRAIGHT;
+                            nextState = STOP;
+                        end else nextState = RIGHT;
+                    end
                    // Nothing Change(6)
                     RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = RIGHT;
                     LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = RIGHT;
@@ -188,11 +207,7 @@ module mainModule(
             
             BACK:begin
                 case(detect)
-                   // ERROR STATE(6)
-                    RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = ERROR;
-                    LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = ERROR;
-                    ERROR_ROAD: nextState = ERROR;
-                    TURN_ROAD101: nextState = ERROR;
+                   // ERROR STATE(0)
                     
                    // Transform state(1)
                     TURN_ROAD111: begin
@@ -204,13 +219,17 @@ module mainModule(
                             transitionState = RIGHT;
                         end
                     end
-                   // Nothing Change(1)
+                   // Nothing Change(7)
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = BACK;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = BACK;
+                    ERROR_ROAD: nextState = BACK;
+                    TURN_ROAD101: nextState = BACK;
                     STRAIGHT_ROAD: nextState = BACK;
                     default :  nextState = BACK;
                 endcase
             end
 
-            STOP:nextState = (reSTART)?transitionState : STOP;
+            STOP:nextState = (reSTART)? transitionState : STOP;
                        
             ERROR: nextState = (~sw[0]) ? IDLE : ERROR;
             
@@ -220,62 +239,70 @@ module mainModule(
   
   // led display
     // led right 3: show detect info
-    reg [2:0]led_right; 
-    always @(*)begin
-        case(detect)
-            ERROR_ROAD: led_right = 3'b000;
-            RIGHT_ROAD: led_right = 3'b001;
-            STRAIGHT_ROAD: led_right = 3'b010;
-            RIGHT_LITTLE_ROAD: led_right = 3'b011;
-            LEFT_ROAD: led_right = 3'b100;
-            TURN_ROAD101: led_right = 3'b101;
-            LEFT_LITTLE_ROAD: led_right = 3'b110;
-            TURN_ROAD111: led_right = 3'b111;
-            default : led_right = 3'b000;
-        endcase
-    end
+        reg [2:0]led_right; 
+        always @(*)begin
+            case(detect)
+                ERROR_ROAD: led_right = 3'b000;
+                RIGHT_ROAD: led_right = 3'b001;
+                STRAIGHT_ROAD: led_right = 3'b010;
+                RIGHT_LITTLE_ROAD: led_right = 3'b011;
+                LEFT_ROAD: led_right = 3'b100;
+                TURN_ROAD101: led_right = 3'b101;
+                LEFT_LITTLE_ROAD: led_right = 3'b110;
+                TURN_ROAD111: led_right = 3'b111;
+                default : led_right = 3'b000;
+            endcase
+        end
     // led left 5: Led state info 
-    reg [4:0]led_left;
-    reg [2:0]choose_lamp;
-    reg [23:0]cnt;
-    always @(posedge clk or posedge rst) begin
-        if(rst) begin
-            cnt <= 0;
-            choose_lamp <= 3'b001;
-        end 
-        else if(state == CHOOSE) begin
-            cnt <= cnt + 1;
-            if(cnt == 24'd500000) begin
+        reg [4:0]led_left;
+        reg [2:0]choose_lamp;
+        reg [23:0]cnt;
+        always @(posedge clk or posedge rst) begin
+            if(rst) begin
                 cnt <= 0;
-                choose_lamp <= {choose_lamp[1:0], choose_lamp[2]}; 
+                choose_lamp <= 3'b001;
+            end 
+            else if(state == CHOOSE) begin
+                cnt <= cnt + 1;
+                if(cnt == 24'd500000) begin
+                    cnt <= 0;
+                    choose_lamp <= {choose_lamp[1:0], choose_lamp[2]}; 
+                end
+            end
+            else begin
+                choose_lamp <= 3'b001;
+                cnt <= 0;
             end
         end
-        else begin
-            choose_lamp <= 3'b001;
-            cnt <= 0;
+        always @(*) begin
+            case (state)
+                IDLE: led_left = 5'd0;
+                START: led_left = 5'd1;
+                COUNT: led_left = 5'b00010;
+                STRAIGHT: led_left = 5'b01000;
+                CHOOSE:led_left = {choose_lamp , 2'd0};
+                LEFT : led_left = 5'b10000;
+                RIGHT: led_left = 5'b00100;
+                STOP:led_left = 5'b11100;
+                BACK:led_left = 5'b01010;
+                ERROR: led_left = 5'b11111;
+                default:led_left = 5'd0;
+            endcase
         end
-    end
-    always @(*) begin
-        case (state)
-            IDLE: led_left = 5'd0;
-            START: led_left = 5'd1;
-            COUNT: led_left = 5'b00010;
-            STRAIGHT: led_left = 5'b01000;
-            CHOOSE:led_left = {choose_lamp , 2'd0};
-            ERROR: led_left = 5'b11111;
-            default:led_left = 5'd0;
-        endcase
-    end
     // led middle [15 14 13 12 11] [10] [9 - 4] [3] [2 1 0]:
     // [9 8 7 6 5 4]: count
-    reg [5:0]led_middle;
-    always @(*)begin
-        case (state)
-            COUNT: led_middle = (flash) ? 6'd0 : 6'b111111;
-            STRAIGHT: led_middle = 6'b001100;
-            default:led_left = 6'd0;
-        endcase
-    end
+        reg [5:0]led_middle;
+        always @(*)begin
+            case (state)
+                COUNT: led_middle = (flash) ? 6'd0 : 6'b111111;
+                STRAIGHT: led_middle = 6'b001100;
+                RIGHT: led_middle = 6'b0000011;
+                LEFT: led_middle = 6'b110000;
+                STOP: led_middle = 6'b111111;
+                BACK: led_middle = (flashBack) ? 6'd0:6'b111111;
+                default:led_left = 6'd0;
+            endcase
+        end
     assign LED = {led_left,1'd0, led_middle ,1'd0,led_right};
   // Senser module
     motor A(
