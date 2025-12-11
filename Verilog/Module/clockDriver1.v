@@ -14,7 +14,6 @@ module clockDriver1(
       end else begin
         num <= num + 1;
       end
-
     end else begin
       num <= 0;
       flash <= 0;

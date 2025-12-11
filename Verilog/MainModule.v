@@ -56,7 +56,7 @@ module mainModule(
     wire countFinish;
     wire [1:0]countDetail;
     clockDriver cD( .clk(clk), .countEnable(countEnable), .countFinish(countFinish), .flash(flash), .countDetail(countDetail));
-    wire countSTOP = (state == STOP) ? 1:0;
+    wire countSTOP = (state == STOP) ? 1 : 0;
     wire reSTART;
     reg [4:0]transitionState;
     clockDriver1 cD1( .clk(clk), .countEnable(countSTOP), .flash(reSTART));
@@ -150,8 +150,6 @@ module mainModule(
                         default : num3 = 4'd15;
                     endcase
                 end
-
-
                 default : begin
                     num0 = 4'd15;
                     num1 = 4'd15;
@@ -217,31 +215,28 @@ module mainModule(
             DoneRight <= 0;
         end
     end
-    always @(posedge clk)begin
-        if(rst)begin
-           transitionState <= IDLE; 
-        end else begin
-            if((state == STRAIGHT || state ==LITTLE_LEFT || state ==LITTLE_RIGHT) && detect == ERROR_ROAD)
-                transitionState <= BACK;
-            else if(state == CHOOSE && detect == TURN_ROAD101)
-                transitionState <= LEFT;
-            else if(state == LEFT)
-                if(detect == TURN_ROAD101)
-                    transitionState <= RIGHT;
-                else if (detect == TURN_ROAD111)
-                    transitionState <= STRAIGHT;
-            else if(state == RIGHT && detect == TURN_ROAD111)
-                transitionState <= STRAIGHT;
-            else if (state == BACK)begin
-                // if(pop==2'd0)begin
-                //     transitionState <= LEFT;
-                // end else if(pop==2'd1) begin
-                //     transitionState <= RIGHT;
-                // end
-                transitionState <= LEFT;
-            end           
-        end
-    end
+    // always @(posedge clk)begin
+    //     if(rst)begin
+    //        transitionState <= IDLE; 
+    //     end else begin
+    //         if((state == STRAIGHT || state ==LITTLE_LEFT || state ==LITTLE_RIGHT) && detect == ERROR_ROAD)
+    //             transitionState <= BACK;
+    //         else if(state == CHOOSE && detect == TURN_ROAD101)
+    //             transitionState <= LEFT;
+    //         else if(state == LEFT)
+    //             if(detect == TURN_ROAD101)
+    //                 transitionState <= RIGHT;
+    //             else if (detect == TURN_ROAD111)
+    //                 transitionState <= STRAIGHT;
+    //         else if(state == RIGHT && detect == TURN_ROAD111)
+    //             transitionState <= STRAIGHT;
+    //         else if (state == BACK)begin
+    //             // TODO
+    //             transitionState <= LEFT;
+    //         end           
+    //     end
+    // end
+    wire [4:0]storeState = transitionState; 
     always @(*)begin
         case(state)
             IDLE: nextState = (sw[0])? START : IDLE;
@@ -257,7 +252,7 @@ module mainModule(
                    // Transform state(2)
                     ERROR_ROAD: begin 
                         nextState =  STOP;
-                        // transitionState = BACK;
+                        transitionState = BACK;
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
                    // Nothing Change(6)
@@ -277,7 +272,7 @@ module mainModule(
                    // Transform state(2)
                     TURN_ROAD101: begin
                         nextState = STOP;
-                        // transitionState = LEFT;
+                        transitionState = LEFT;
                     end
                     TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
                    // Nothing Change(6)
@@ -296,12 +291,12 @@ module mainModule(
                    // Transform state(2)
                     TURN_ROAD101: begin
                         nextState = STOP;
-                        // transitionState = RIGHT;
+                        transitionState = RIGHT;
                     end
                     TURN_ROAD111: begin
                         if(checkPoint3)begin
                             nextState = STOP;
-                            // transitionState = STRAIGHT;
+                            transitionState = STRAIGHT;
                         end else nextState = LEFT;
                     end
                    // Nothing Change(6)
@@ -320,7 +315,7 @@ module mainModule(
                    // Transform state(2)
                     ERROR_ROAD: begin 
                         nextState =  STOP;
-                        // transitionState = BACK;
+                        transitionState = BACK;
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
                    // Nothing Change(6)
@@ -340,7 +335,7 @@ module mainModule(
                     TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
                     TURN_ROAD111: begin
                         if(checkPoint4 && DoneRight)begin
-                            // transitionState = STRAIGHT;
+                            transitionState = STRAIGHT;
                             nextState = STOP;
                         end else nextState = RIGHT;
                     end
@@ -360,7 +355,7 @@ module mainModule(
                    // Transform state(2)
                     ERROR_ROAD: begin 
                         nextState =  STOP;
-                        // transitionState = BACK;
+                        transitionState = BACK;
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
                    // Nothing Change(6)
@@ -387,6 +382,7 @@ module mainModule(
                         //     transitionState = RIGHT;
                         // end
                         nextState = STOP;
+                        transitionState = LEFT;
                     end
                    // Nothing Change(7)
                     RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = BACK;
@@ -398,13 +394,15 @@ module mainModule(
                 endcase
             end
 
-            STOP:nextState = (reSTART)? transitionState : STOP;
+            STOP:nextState = (reSTART)? storeState : STOP;
          
             ERROR: nextState = (~sw[0]) ? IDLE : ERROR;
             
             default : nextState = state;
         endcase
     end
+
+    
   
   // led display
     // led right 3: show detect info
