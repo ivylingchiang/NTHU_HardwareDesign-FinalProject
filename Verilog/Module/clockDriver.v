@@ -1,8 +1,8 @@
 module clockDriver(
   input wire clk,
   input wire countEnable,
-  output reg countFinish = 0,
-  output reg flash = 0,
+  output reg countFinish ,
+  output reg flash ,
   output wire [1:0]countDetail
   );
 

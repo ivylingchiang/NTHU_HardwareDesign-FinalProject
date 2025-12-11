@@ -134,7 +134,14 @@ module mainModule(
                     num0 = 4'd0;
                     num1 = 4'd0;
                     num2 = 4'd0;
-                    num3 = 4'd0;
+                    case(transitionState)
+                        IDLE: num3 = 4'd12;
+                        STRAIGHT: num3 = 4'd0;
+                        LEFT: num3 = 4'd13;
+                        RIGHT: num3 = 4'd15;
+                        BACK: num3 = 4'd13;
+                        default : num3 = 4'd15;
+                    endcase
                 end
 
 
@@ -219,12 +226,13 @@ module mainModule(
             else if(state == RIGHT && detect == TURN_ROAD111)
                 transitionState <= STRAIGHT;
             else if (state == BACK)begin
-                if(pop==2'd0)begin
-                    transitionState <= LEFT;
-                end else if(pop==2'd1) begin
-                    transitionState <= RIGHT;
-                end
-            end else transitionState <= IDLE;            
+                // if(pop==2'd0)begin
+                //     transitionState <= LEFT;
+                // end else if(pop==2'd1) begin
+                //     transitionState <= RIGHT;
+                // end
+                transitionState <= LEFT;
+            end           
         end
     end
     always @(*)begin
