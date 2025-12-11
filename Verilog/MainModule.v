@@ -16,16 +16,16 @@ module mainModule(
     output right_pwm
 );
   // Wire, Reg signal
-    reg [4:0]state, nextState;
+    reg [4:0]state, nextState, lastState;
     wire [2:0]detect;
     wire [19:0] distance;
     localparam [2:0]ERROR_ROAD = 3'b000;
-    localparam [2:0]RIGHT_ROAD = 3'b001;
+    localparam [2:0]RIGHT_ROAD = 3'b011;
     localparam [2:0]STRAIGHT_ROAD = 3'b010;
-    localparam [2:0]RIGHT_LITTLE_ROAD = 3'b011;
-    localparam [2:0]LEFT_ROAD = 3'b100;
+    localparam [2:0]RIGHT_LITTLE_ROAD = 3'b001;
+    localparam [2:0]LEFT_ROAD = 3'b110;
     localparam [2:0]TURN_ROAD101 = 3'b101;
-    localparam [2:0]LEFT_LITTLE_ROAD = 3'b110;
+    localparam [2:0]LEFT_LITTLE_ROAD = 3'b100;
     localparam [2:0]TURN_ROAD111 = 3'b111;
 
   // debounce, one pulse
@@ -39,9 +39,11 @@ module mainModule(
     localparam [4:0]COUNT = 5'd2;
     localparam [4:0]STRAIGHT = 5'd3;
     localparam [4:0]CHOOSE = 5'd4;
-    localparam [4:0]TURN_LEFT = 5'd5;
-    localparam [4:0]RIGHT = 5'd6;
-    localparam [4:0]BACK = 5'd7;
+    localparam [4:0]TURN_STRAIGHT = 5'd5;
+    localparam [4:0]TURN_LEFT = 5'd6;
+    localparam [4:0]TURN_RIGHT = 5'd7;
+    localparam [4:0]TURN_LITTLE_LEFT = 5'd8;
+    localparam [4:0]TURN_LITTLE_RIGHT = 5'd9;
     localparam [4:0]STOP = 5'd30;
     localparam [4:0]ERROR = 5'd31;
 
@@ -100,7 +102,10 @@ module mainModule(
   // FSM transform  
     always @(posedge clk or posedge rst)begin
         if(rst || sw[0] == 0) state <= IDLE;
-        else state <= nextState;
+        else begin
+            state <= nextState;
+            lastState <= state;
+        end
     end
     
     always @(*)begin
@@ -111,10 +116,10 @@ module mainModule(
             STRAIGHT:begin
                 case(detect)
                    ERROR_ROAD: nextState = STRAIGHT;
-                   RIGHT_ROAD: nextState = ERROR;
-                   RIGHT_LITTLE_ROAD: nextState = ERROR;
-                   LEFT_ROAD: nextState = ERROR;
-                   LEFT_LITTLE_ROAD: nextState = ERROR;
+                   RIGHT_ROAD: nextState = STRAIGHT;
+                   RIGHT_LITTLE_ROAD: nextState = TURN_LITTLE_RIGHT;
+                   LEFT_ROAD: nextState = STRAIGHT;
+                   LEFT_LITTLE_ROAD: nextState = TURN_LITTLE_LEFT;
 
 
                    STRAIGHT_ROAD: nextState = STRAIGHT;
@@ -128,7 +133,7 @@ module mainModule(
                    ERROR_ROAD: nextState = CHOOSE;
                    RIGHT_ROAD:nextState = CHOOSE;
                    RIGHT_LITTLE_ROAD:nextState = CHOOSE;
-                   LEFT_ROAD:nextState = CHOOSE;
+                   LEFT_ROAD:nextState = TURN_LEFT;
                    LEFT_LITTLE_ROAD:nextState = CHOOSE;
                    STRAIGHT_ROAD: nextState = CHOOSE;
 
@@ -138,7 +143,68 @@ module mainModule(
                     default :  nextState = CHOOSE;
                 endcase
             end
+            TURN_LEFT:begin
+                case(detect)
+                   ERROR_ROAD: nextState = TURN_LEFT;
+                   RIGHT_ROAD:nextState = TURN_LEFT;
+                   RIGHT_LITTLE_ROAD:nextState = TURN_LEFT;
+                   LEFT_ROAD:nextState = TURN_LEFT;
+                   LEFT_LITTLE_ROAD:nextState = TURN_LEFT;
+                   STRAIGHT_ROAD: nextState = TURN_LEFT;
+
+
+                   TURN_ROAD101: nextState = CHOOSE; 
+                   TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                    default :  nextState = TURN_LEFT;
+                endcase
+            end
+            TURN_LITTLE_LEFT:begin//slightly fixing direction when going straight
+                case(detect)
+                   ERROR_ROAD: nextState = TURN_LITTLE_LEFT;
+                   RIGHT_ROAD:nextState = ERROR;
+                   RIGHT_LITTLE_ROAD:nextState = TURN_LITTLE_RIGHT;
+                   LEFT_ROAD:nextState = TURN_LEFT;
+                   LEFT_LITTLE_ROAD:nextState = TURN_LITTLE_LEFT;
+                   STRAIGHT_ROAD: nextState = STRAIGHT;
+
+
+                   TURN_ROAD101: nextState = CHOOSE; 
+                   TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                    default :  nextState = TURN_LITTLE_LEFT;
+                endcase
+            end
+            TURN_RIGHT:begin
+                case(detect)
+                   ERROR_ROAD: nextState = TURN_RIGHT;
+                   RIGHT_ROAD:nextState = TURN_RIGHT;
+                   RIGHT_LITTLE_ROAD:nextState = TURN_RIGHT;
+                   LEFT_ROAD:nextState = TURN_RIGHT;
+                   LEFT_LITTLE_ROAD:nextState = TURN_RIGHT;
+                   STRAIGHT_ROAD: nextState = TURN_RIGHT;
+
+
+                   TURN_ROAD101: nextState = CHOOSE; 
+                   TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                    default :  nextState = TURN_RIGHT;
+                endcase
+            end
+            TURN_LITTLE_RIGHT:begin//slightly fixing direction when going straight
+                case(detect)
+                   ERROR_ROAD: nextState = TURN_LITTLE_RIGHT;
+                   RIGHT_ROAD:nextState = ERROR;
+                   RIGHT_LITTLE_ROAD:nextState = TURN_LITTLE_RIGHT;
+                   LEFT_ROAD:nextState = TURN_LEFT;
+                   LEFT_LITTLE_ROAD:nextState = TURN_LITTLE_LEFT;
+                   STRAIGHT_ROAD: nextState = STRAIGHT;
+
+
+                   TURN_ROAD101: nextState = CHOOSE; 
+                   TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                    default :  nextState = TURN_LITTLE_RIGHT;
+                endcase
+            end
             ERROR: nextState = (~sw[0]) ? IDLE : ERROR;
+            
             default : nextState = state;
         endcase
     end
@@ -151,12 +217,12 @@ module mainModule(
     always @(*)begin
         case(detect)
             ERROR_ROAD: led_right = 3'b000;
-            RIGHT_ROAD: led_right = 3'b001;
+            RIGHT_ROAD: led_right = 3'b011;
             STRAIGHT_ROAD: led_right = 3'b010;
-            RIGHT_LITTLE_ROAD: led_right = 3'b011;
-            LEFT_ROAD: led_right = 3'b100;
+            RIGHT_LITTLE_ROAD: led_right = 3'b001;
+            LEFT_ROAD: led_right = 3'b110;
             TURN_ROAD101: led_right = 3'b101;
-            LEFT_LITTLE_ROAD: led_right = 3'b110;
+            LEFT_LITTLE_ROAD: led_right = 3'b100;
             TURN_ROAD111: led_right = 3'b111;
             default : led_right = 3'b000;
         endcase
@@ -200,7 +266,7 @@ module mainModule(
         case (state)
             COUNT: led_middle = (flash) ? 6'd0 : 6'b111111;
             STRAIGHT: led_middle = 6'b001100;
-            default:led_left = 6'd0;
+            default:led_middle = 6'd0;
         endcase
     end
     assign LED = {led_left,1'd0, led_middle ,1'd0,led_right};
@@ -211,6 +277,7 @@ module mainModule(
         .clk(clk),
         .rst(rst),
         .mode(state),
+        .lastMode(lastState),
         .pwm({left_pwm, right_pwm}),
         .l_IN({IN1, IN2}),
         .r_IN({IN3, IN4})
