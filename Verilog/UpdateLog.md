@@ -58,7 +58,10 @@
   (2) Debug led signal design
 ```
 
-
+## 20251212
+```
+  1. finish BASIC map
+```
 # Note
 
 ## git command 
