@@ -42,7 +42,6 @@ module motor(
             l_IN <= 2'b10;
         end
         else begin
-            
             case(mode)
                 IDLE: begin
                     left_motor <= 0;
@@ -64,7 +63,7 @@ module motor(
                 end
                 STRAIGHT: begin
                     left_motor <= 10'd750;
-                    right_motor <= 10'd750;
+                    right_motor <= 10'd745;
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
@@ -81,12 +80,10 @@ module motor(
                     l_IN <= 2'b10; 
                 end
                 LEFT:begin
-                    
                     left_motor <= 10'd750;
                     right_motor <= 10'd750;
                     r_IN <= 2'b10;
                     l_IN <= 2'b01; 
-                    
                 end
                 LITTLE_LEFT:begin
                     left_motor <= 10'd700;
@@ -95,7 +92,6 @@ module motor(
                     l_IN <= 2'b10; 
                 end
                 RIGHT:begin
-                    
                     left_motor <= 10'd750;
                     right_motor <= 10'd750;
                     r_IN <= 2'b01;
@@ -107,14 +103,12 @@ module motor(
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
-
                 BACK:begin
                     left_motor <= 10'd750;
-                    right_motor <= 10'd750;
+                    right_motor <= 10'd745;
                     r_IN <= 2'b01;
                     l_IN <= 2'b01; 
                 end
-
                 STOP:begin
                     left_motor <= 0;
                     right_motor <= 0;
