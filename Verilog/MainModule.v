@@ -69,7 +69,8 @@ module mainModule(
     // cp2: from left(111) to straight(111)
     // cp3: from stop(111) to left(111)
     // cp4: from stop(111) to right(111)
-        reg checkPoint1,checkPoint2,checkPoint3,checkPoint4;
+    // cp5: from choose(101) to left(101)
+        reg checkPoint1,checkPoint2,checkPoint3,checkPoint4, checkPoint5;
         reg [4:0]storeState ;
         reg [3:0]num0, num1, num2, num3;
         always @(*)begin
@@ -167,6 +168,7 @@ module mainModule(
                 checkPoint2 <= 0;
                 checkPoint3 <= 0;
                 checkPoint4 <= 0;
+                checkPoint5 <= 0;
                 
             end else begin
                 storeState <= transitionState;
@@ -189,6 +191,10 @@ module mainModule(
                 // back/stop -> right (may detect anything) 
                 if(state == RIGHT && detect != 3'b111)checkPoint4 <= 1;
                 else if(state != RIGHT) checkPoint4<=0;
+
+                // choose(101) -> left(101)
+                if(state == LEFT && detect != 3'b101) checkPoint5 <= 1;
+                else if(state != LEFT) checkPoint5<=0;
 
 
             end
@@ -220,7 +226,11 @@ module mainModule(
         case(state)
             STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
             CHOOSE: transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
-            LEFT: transitionState = (detect == TURN_ROAD101) ? RIGHT: LEFT;
+            LEFT: begin
+                if(detect == TURN_ROAD101) transitionState = RIGHT;
+                else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
+                else transitionState = LEFT;
+            end
             RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
             BACK: transitionState = (detect == TURN_ROAD111) ? LEFT: BACK;
             default : transitionState = storeState;
@@ -281,7 +291,11 @@ module mainModule(
                    // Transform state(2)
                     TURN_ROAD101: begin
                         // transitionState = RIGHT;
-                        nextState = STOP;                      
+                        if(checkPoint5)begin
+                            nextState = STOP;
+                        end else begin
+                            nextState = LEFT;
+                        end                      
                     end
                     TURN_ROAD111: begin
                         if(checkPoint3)begin
