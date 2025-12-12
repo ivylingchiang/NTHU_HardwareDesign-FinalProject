@@ -161,5 +161,26 @@ localparam [4:0]ERROR = 5'd31;
 12: display = 7'b0100001 ; //d
 13: display = 7'b1000111 ; //L
 14: display = 7'b0000110 ; //E
-15: display = 7'b0101111 ; // r
+15: display = 7'b0101111 ; //r
 ``` 
+
+* Seven Segment Display
+```
+IDLE:  IdLE
+START: ----
+COUNT: --- {counter from 3->0}
+STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: C2-{checkPoint2}
+CHOOSE: C1-{checkPoint1}
+LEFT: C3-{checkPoint3}
+RIGHT: C4-{checkPoint4}
+BACK: -00{storeState}
+STOP: {reSTART}00{storeState}
+```
+
+```
+IDLE: num3 = 4'd12;
+STRAIGHT: num3 = 4'd1;
+LEFT: num3 = 4'd13;
+RIGHT: num3 = 4'd15;
+BACK: num3 = 4'd11; //-
+```

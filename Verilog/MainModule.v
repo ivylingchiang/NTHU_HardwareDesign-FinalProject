@@ -124,7 +124,7 @@ module mainModule(
                 end
 
                 BACK: begin
-                    num0 = 4'd11;
+                    num0 = 4'd11; //-
                     num1 = 4'd0;
                     num2 = 4'd0;
                     case(storeState)
@@ -132,7 +132,7 @@ module mainModule(
                         STRAIGHT: num3 = 4'd1;
                         LEFT: num3 = 4'd13;
                         RIGHT: num3 = 4'd15;
-                        BACK: num3 = 4'd11;
+                        BACK: num3 = 4'd11; //-
                         default : num3 = 4'd0;
                     endcase
                 end
@@ -151,6 +151,8 @@ module mainModule(
                         default : num3 = 4'd0;
                     endcase
                 end
+
+
                 default : begin
                     num0 = 4'd0;
                     num1 = 4'd0;
@@ -214,6 +216,16 @@ module mainModule(
             DoneRight <= 0;
         end
     end
+    always @(*)begin
+        case(state)
+            STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
+            CHOOSE: transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
+            LEFT: transitionState = (detect == TURN_ROAD101) ? RIGHT: LEFT;
+            RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
+            BACK: transitionState = (detect == TURN_ROAD111) ? LEFT: BACK;
+            default : transitionState = IDLE;
+        endcase
+    end
      
     always @(*)begin
         case(state)
@@ -229,7 +241,7 @@ module mainModule(
                     
                    // Transform state(2)
                     ERROR_ROAD: begin 
-                        transitionState = BACK;
+                        // transitionState = BACK;
                         nextState =  STOP;                        
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
@@ -249,7 +261,7 @@ module mainModule(
                     
                    // Transform state(2)
                     TURN_ROAD101: begin
-                        transitionState = LEFT;
+                        // transitionState = LEFT;
                         nextState = STOP;                        
                     end
                     TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
@@ -268,14 +280,16 @@ module mainModule(
                     
                    // Transform state(2)
                     TURN_ROAD101: begin
-                        transitionState = RIGHT;
-                        nextState = STOP;                        
+                        // transitionState = RIGHT;
+                        nextState = STOP;                      
                     end
                     TURN_ROAD111: begin
                         if(checkPoint3)begin
-                            transitionState = STRAIGHT;
-                            nextState = STOP;                            
-                        end else nextState = LEFT;
+                            // transitionState = STRAIGHT;
+                            nextState = STOP;                 
+                        end else begin
+                            nextState = LEFT;
+                        end
                     end
                    // Nothing Change(6)
                     RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = LEFT;
@@ -292,7 +306,7 @@ module mainModule(
                     
                    // Transform state(2)
                     ERROR_ROAD: begin 
-                        transitionState = BACK;
+                        // transitionState = BACK;
                         nextState =  STOP;
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
@@ -313,7 +327,7 @@ module mainModule(
                     TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
                     TURN_ROAD111: begin
                         if(checkPoint4 && DoneRight)begin
-                            transitionState = STRAIGHT;
+                            // transitionState = STRAIGHT;
                             nextState = STOP;
                         end else nextState = RIGHT;
                     end
@@ -332,7 +346,7 @@ module mainModule(
                     
                    // Transform state(2)
                     ERROR_ROAD: begin 
-                        transitionState = BACK;
+                        // transitionState = BACK;
                         nextState =  STOP;
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
@@ -352,14 +366,7 @@ module mainModule(
                     
                    // Transform state(1)
                     TURN_ROAD111: begin
-                        // if(pop==2'd0)begin
-                        //     nextState = STOP;
-                        //     transitionState = LEFT;
-                        // end else if(pop==2'd1) begin
-                        //     nextState = STOP;
-                        //     transitionState = RIGHT;
-                        // end
-                        transitionState = LEFT;
+                        // transitionState = LEFT;
                         nextState = STOP;                        
                     end
                    // Nothing Change(7)
@@ -451,9 +458,7 @@ module mainModule(
     assign LED = {led_left,1'd0, led_middle ,1'd0,led_right};
     assign nums = {num0, num1, num2, num3};
 
-  // Seven Segment
-    always @(*)begin
-    end
+
   // Senser module
     SevenSegment(
 	    .display(DISPLAY),
