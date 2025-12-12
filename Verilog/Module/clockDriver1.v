@@ -4,7 +4,7 @@ module clockDriver1(
   output reg flash
   );
 
-  reg [31:0] num = 0;
+  reg [31:0] num ;
 
   always @(posedge clk) begin
     if (countEnable) begin

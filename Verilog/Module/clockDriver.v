@@ -6,8 +6,8 @@ module clockDriver(
   output wire [1:0]countDetail
   );
 
-  reg [31:0] num = 0;
-  reg [1:0] counter = 0;
+  reg [31:0] num ;
+  reg [1:0] counter;
   assign countDetail = counter;
 
   always @(posedge clk) begin
