@@ -82,11 +82,12 @@ module mainModule(
                 checkPoint3 <= 0;
                 checkPoint4 <= 0;
                 checkPoint5 <= 0;
+                storepop <= 0;
+                storeState <= LEFT;
                 
             end else begin
                 storeState <= transitionState;
                 storepop <= pop;
-
                 // if(state == IDLE) begining <= 0;
                 // straight -> choose(only detect 000)
                 if(state == CHOOSE && detect != 3'b111) 
@@ -161,11 +162,13 @@ module mainModule(
             RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
             BACK: begin
                 // pop value assign next transition
-                if(pop == 0)begin
-                    transitionState = (detect == TURN_ROAD111) ? LEFT: BACK;
-                    pop = 1;
+                if(detect == TURN_ROAD111 && storepop == 0)begin
+                    transitionState = LEFT;
+                    pop =  1 ;
                 end
-                else transitionState = (detect == TURN_ROAD111) ? RIGHT: BACK;
+                else if(detect == TURN_ROAD111 && storepop) begin
+                    transitionState = RIGHT;
+                end
             end
             default : transitionState = storeState;
         endcase
