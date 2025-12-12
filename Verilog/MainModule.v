@@ -193,9 +193,8 @@ module mainModule(
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
                    // Nothing Change(6)
-                    RIGHT_ROAD, LEFT_ROAD: nextState = STRAIGHT;
-                    RIGHT_LITTLE_ROAD: nextState = LITTLE_RIGHT;
-                    LEFT_LITTLE_ROAD: nextState = LITTLE_LEFT;
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD: nextState = LITTLE_RIGHT;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD: nextState = LITTLE_LEFT;
                     TURN_ROAD101: nextState = STRAIGHT;
                     STRAIGHT_ROAD: nextState = STRAIGHT;                  
                     default : nextState = STRAIGHT;
@@ -262,9 +261,8 @@ module mainModule(
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
                    // Nothing Change(6)
-                    RIGHT_ROAD, LEFT_ROAD: nextState = STRAIGHT;
-                    RIGHT_LITTLE_ROAD: nextState = LITTLE_RIGHT;
-                    LEFT_LITTLE_ROAD: nextState = LITTLE_LEFT;
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD: nextState = LITTLE_RIGHT;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD: nextState = LITTLE_LEFT;
                     TURN_ROAD101: nextState = STRAIGHT;
                     STRAIGHT_ROAD: nextState = STRAIGHT;                  
                     default :  nextState = LITTLE_LEFT;
@@ -302,9 +300,8 @@ module mainModule(
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
                    // Nothing Change(6)
-                    RIGHT_ROAD, LEFT_ROAD: nextState = STRAIGHT;
-                    RIGHT_LITTLE_ROAD: nextState = LITTLE_RIGHT;
-                    LEFT_LITTLE_ROAD: nextState = LITTLE_LEFT;
+                    RIGHT_ROAD, RIGHT_LITTLE_ROAD: nextState = LITTLE_RIGHT;
+                    LEFT_ROAD, LEFT_LITTLE_ROAD: nextState = LITTLE_LEFT;
                     TURN_ROAD101: nextState = STRAIGHT;
                     STRAIGHT_ROAD: nextState = STRAIGHT;    
                     default :  nextState = LITTLE_RIGHT;
