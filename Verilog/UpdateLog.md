@@ -28,7 +28,8 @@
     RIGHT    [0 0 1 0 0] [0] [ 00 00 11 ] [0] [---]
     STOP     [1 1 1 0 0] [0] [ 11 11 11 ] [0] [---]
     BACK     [0 1 0 1 0] [0] [  flash   ] [0] [---]
-        
+    FINISH   [1 1 1 1 1] [1] [ 11 11 11 ] [1] [---]
+ 
   4. Update "flow" led display of the CHOOSE state
 ```
 
@@ -138,6 +139,7 @@ localparam [4:0]RIGHT = 5'd6;
 localparam [4:0]BACK = 5'd7;
 localparam [4:0]LITTLE_LEFT = 5'd8;
 localparam [4:0]LITTLE_RIGHT = 5'd9;
+localparam [4:0]FINISH = 5'd29;
 localparam [4:0]STOP = 5'd30;
 localparam [4:0]ERROR = 5'd31;
 ```

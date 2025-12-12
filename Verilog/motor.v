@@ -30,6 +30,7 @@ module motor(
     localparam [4:0]BACK = 5'd7;
     localparam [4:0]LITTLE_LEFT = 5'd8;
     localparam [4:0]LITTLE_RIGHT = 5'd9;
+    localparam [4:0]FINISH = 5'd29;
     localparam [4:0]STOP = 5'd30;
     localparam [4:0]ERROR = 5'd31;
 
@@ -63,7 +64,7 @@ module motor(
                 end
                 STRAIGHT: begin
                     left_motor <= 10'd750;
-                    right_motor <= 10'd745;
+                    right_motor <= 10'd740;
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
@@ -105,11 +106,23 @@ module motor(
                 end
                 BACK:begin
                     left_motor <= 10'd750;
-                    right_motor <= 10'd745;
+                    right_motor <= 10'd740;
                     r_IN <= 2'b01;
                     l_IN <= 2'b01; 
                 end
+                FINISH:begin
+                    left_motor <= 0;
+                    right_motor <= 0;
+                    r_IN <= 2'b10;
+                    l_IN <= 2'b10; 
+                end
                 STOP:begin
+                    left_motor <= 0;
+                    right_motor <= 0;
+                    r_IN <= 2'b10;
+                    l_IN <= 2'b10; 
+                end
+                default: begin
                     left_motor <= 0;
                     right_motor <= 0;
                     r_IN <= 2'b10;
