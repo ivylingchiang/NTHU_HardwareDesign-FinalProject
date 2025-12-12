@@ -223,7 +223,7 @@ module mainModule(
             LEFT: transitionState = (detect == TURN_ROAD101) ? RIGHT: LEFT;
             RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
             BACK: transitionState = (detect == TURN_ROAD111) ? LEFT: BACK;
-            default : transitionState = IDLE;
+            default : transitionState = storeState;
         endcase
     end
      
