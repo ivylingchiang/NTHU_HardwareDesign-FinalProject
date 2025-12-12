@@ -73,6 +73,8 @@ module mainModule(
         reg checkPoint1,checkPoint2,checkPoint3,checkPoint4, checkPoint5;
         reg [4:0]storeState ;
         reg [3:0]num0, num1, num2, num3;
+        // TODO
+        reg pop, storepop;
         always @(*)begin
             case(state)
                 IDLE: begin
@@ -172,6 +174,7 @@ module mainModule(
                 
             end else begin
                 storeState <= transitionState;
+                storepop <= pop;
 
                 // if(state == IDLE) begining <= 0;
                 // straight -> choose(only detect 000)
@@ -199,10 +202,6 @@ module mainModule(
 
             end
         end
-
-    // TODO
-    wire [1:0]pop = 2'd0;
-
   // FSM transform  
     always @(posedge clk or posedge rst)begin
         if(rst || sw[0] == 0) state <= IDLE;
@@ -224,7 +223,9 @@ module mainModule(
     end
     always @(*)begin
         case(state)
-            STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
+            STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
+                transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
+            end
             CHOOSE: transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
             LEFT: begin
                 if(detect == TURN_ROAD101) transitionState = RIGHT;
@@ -232,11 +233,28 @@ module mainModule(
                 else transitionState = LEFT;
             end
             RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
-            BACK: transitionState = (detect == TURN_ROAD111) ? LEFT: BACK;
+            BACK: begin
+                // pop value assign next transition
+                if(pop == 0)
+                transitionState = (detect == TURN_ROAD111) ? LEFT: BACK;
+                else transitionState = (detect == TURN_ROAD111) ? RIGHT: BACK;
+            end
             default : transitionState = storeState;
         endcase
     end
-     
+    always @(*)begin
+        pop = storepop;
+        case(state)
+            STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
+                if(detect == ERROR_ROAD)
+                    if(pop == 0)pop = 1;
+            end
+            CHOOSE: begin
+                if(checkPoint1 && detect == 3'b111) pop = 0;
+                else if(checkPoint1 && detect == 3'b101) pop = 1;
+            end
+        endcase
+    end     
     always @(*)begin
         case(state)
             IDLE: nextState = (sw[0])? START : IDLE;
@@ -252,6 +270,7 @@ module mainModule(
                    // Transform state(2)
                     ERROR_ROAD: begin 
                         // transitionState = BACK;
+                        // TODO : pop
                         nextState =  STOP;                        
                     end
                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
