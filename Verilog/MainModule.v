@@ -75,95 +75,6 @@ module mainModule(
         reg [3:0]num0, num1, num2, num3;
         // TODO
         reg pop, storepop;
-        always @(*)begin
-            case(state)
-                IDLE: begin
-                    num0 = 4'd1;
-                    num1 = 4'd12;
-                    num2 = 4'd13;
-                    num3 = 4'd14;
-                end
-
-                START: begin
-                    num0 = 4'd11;
-                    num1 = 4'd11;
-                    num2 = 4'd11;
-                    num3 = 4'd11;
-                end
-
-                COUNT: begin
-                    num0 = 4'd11;
-                    num1 = 4'd11;
-                    num2 = 4'd11;
-                    num3 = 3 - countDetail;
-                end
-
-                STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin //checkPoint2
-                    num0 = 4'd10;
-                    num1 = 4'd2;
-                    num2 = 4'd11;
-                    num3 = (checkPoint2) ? 4'd1:4'd0;
-                end
-
-                CHOOSE: begin
-                    num0 = 4'd10;
-                    num1 = 4'd1;
-                    num2 = 4'd11;
-                    num3 = (checkPoint1) ? 4'd1:4'd0;
-                end
-
-                LEFT: begin
-                    num0 = 4'd10;
-                    num1 = 4'd3;
-                    num2 = 4'd11;
-                    num3 = (checkPoint3) ? 4'd1:4'd0;
-                end
-
-                RIGHT: begin
-                    num0 = 4'd10;
-                    num1 = 4'd4;
-                    num2 = 4'd11;
-                    num3 = (checkPoint4) ? 4'd1:4'd0;
-                end
-
-                BACK: begin
-                    num0 = 4'd11; //-
-                    num1 = 4'd0;
-                    num2 = 4'd0;
-                    case(storeState)
-                        IDLE: num3 = 4'd12;
-                        STRAIGHT: num3 = 4'd1;
-                        LEFT: num3 = 4'd13;
-                        RIGHT: num3 = 4'd15;
-                        BACK: num3 = 4'd11; //-
-                        default : num3 = 4'd0;
-                    endcase
-                end
-
-
-                STOP: begin
-                    num0 = (reSTART)? 4'd1 : 4'd0;
-                    num1 = 4'd0;
-                    num2 = 4'd0;
-                    case(storeState)
-                        IDLE: num3 = 4'd12;
-                        STRAIGHT: num3 = 4'd1;
-                        LEFT: num3 = 4'd13;
-                        RIGHT: num3 = 4'd15;
-                        BACK: num3 = 4'd11;
-                        default : num3 = 4'd0;
-                    endcase
-                end
-
-
-                default : begin
-                    num0 = 4'd0;
-                    num1 = 4'd0;
-                    num2 = 4'd0;
-                    num3 = 4'd0;
-                end
-            endcase
-        end
         always @(posedge clk) begin
             if(rst) begin
                 checkPoint1 <= 0;
@@ -425,7 +336,96 @@ module mainModule(
     end
 
     
-  
+  // SevenSegment Display
+    always @(*)begin
+            case(state)
+                IDLE: begin
+                    num0 = 4'd1;
+                    num1 = 4'd12;
+                    num2 = 4'd13;
+                    num3 = 4'd14;
+                end
+
+                START: begin
+                    num0 = 4'd11;
+                    num1 = 4'd11;
+                    num2 = 4'd11;
+                    num3 = 4'd11;
+                end
+
+                COUNT: begin
+                    num0 = 4'd11;
+                    num1 = 4'd11;
+                    num2 = 4'd11;
+                    num3 = 3 - countDetail;
+                end
+
+                STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin //checkPoint2
+                    num0 = 4'd10;
+                    num1 = 4'd2;
+                    num2 = 4'd11;
+                    num3 = (checkPoint2) ? 4'd1:4'd0;
+                end
+
+                CHOOSE: begin
+                    num0 = 4'd10;
+                    num1 = 4'd1;
+                    num2 = 4'd11;
+                    num3 = (checkPoint1) ? 4'd1:4'd0;
+                end
+
+                LEFT: begin
+                    num0 = 4'd10;
+                    num1 = 4'd3;
+                    num2 = 4'd11;
+                    num3 = (checkPoint3) ? 4'd1:4'd0;
+                end
+
+                RIGHT: begin
+                    num0 = 4'd4;
+                    num1 = (checkPoint4) ? 4'd1:4'd0;
+                    num2 = 4'd11;
+                    num3 = (counterRight == 2'd0)? 4'd0: (counterRight == 2'd1) ? 4'd1:4'd2;
+                end
+
+                BACK: begin
+                    num0 = 4'd11; //-
+                    num1 = 4'd0;
+                    num2 = 4'd0;
+                    case(storeState)
+                        IDLE: num3 = 4'd12;
+                        STRAIGHT: num3 = 4'd1;
+                        LEFT: num3 = 4'd13;
+                        RIGHT: num3 = 4'd15;
+                        BACK: num3 = 4'd11; //-
+                        default : num3 = 4'd0;
+                    endcase
+                end
+
+
+                STOP: begin
+                    num0 = (reSTART)? 4'd1 : 4'd0;
+                    num1 = 4'd0;
+                    num2 = 4'd0;
+                    case(storeState)
+                        IDLE: num3 = 4'd12;
+                        STRAIGHT: num3 = 4'd1;
+                        LEFT: num3 = 4'd13;
+                        RIGHT: num3 = 4'd15;
+                        BACK: num3 = 4'd11;
+                        default : num3 = 4'd0;
+                    endcase
+                end
+
+
+                default : begin
+                    num0 = 4'd0;
+                    num1 = 4'd0;
+                    num2 = 4'd0;
+                    num3 = 4'd0;
+                end
+            endcase
+        end
   // led display
     // led right 3: show detect info
         reg [2:0]led_right; 
@@ -494,8 +494,6 @@ module mainModule(
         end
     assign LED = {led_left,1'd0, led_middle ,1'd0,led_right};
     assign nums = {num0, num1, num2, num3};
-
-
   // Senser module
     SevenSegment(
 	    .display(DISPLAY),
