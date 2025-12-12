@@ -212,9 +212,19 @@ module mainModule(
     end
     reg [1:0]counterRight;
     reg DoneRight;
+    reg control;
+    reg control_s;
+    always @(posedge clk)begin
+        control_s <= control;
+        if(state == RIGHT && detect == 3'b111)begin
+            control <= 1;
+        end else control <= 0;
+    end
     always @(posedge clk)begin
         if(checkPoint4 && state == RIGHT && detect == 3'b111)begin
-            counterRight <= counterRight +1;
+            if(control && !control_s)
+                counterRight <= counterRight +1;
+            
             if(counterRight >= 2) DoneRight <= 1;
         end else if(state != RIGHT) begin 
             counterRight <= 0;
