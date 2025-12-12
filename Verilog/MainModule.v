@@ -213,7 +213,7 @@ module mainModule(
     reg [1:0]counterRight;
     reg DoneRight;
     always @(posedge clk)begin
-        if(state == RIGHT && detect == 3'b111)begin
+        if(checkPoint4 && state == RIGHT && detect == 3'b111)begin
             counterRight <= counterRight +1;
             if(counterRight >= 2) DoneRight <= 1;
         end else if(state != RIGHT) begin 
@@ -222,11 +222,16 @@ module mainModule(
         end
     end
     always @(*)begin
+        pop = storepop;
         case(state)
             STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
                 transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
             end
-            CHOOSE: transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
+            CHOOSE: begin
+                transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
+                if(checkPoint1 && detect == 3'b111) pop = 0;
+                else if(checkPoint1 && detect == 3'b101) pop = 1;
+            end
             LEFT: begin
                 if(detect == TURN_ROAD101) transitionState = RIGHT;
                 else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
@@ -235,26 +240,15 @@ module mainModule(
             RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
             BACK: begin
                 // pop value assign next transition
-                if(pop == 0)
-                transitionState = (detect == TURN_ROAD111) ? LEFT: BACK;
+                if(pop == 0)begin
+                    transitionState = (detect == TURN_ROAD111) ? LEFT: BACK;
+                    pop = 1;
+                end
                 else transitionState = (detect == TURN_ROAD111) ? RIGHT: BACK;
             end
             default : transitionState = storeState;
         endcase
-    end
-    always @(*)begin
-        pop = storepop;
-        case(state)
-            STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
-                if(detect == ERROR_ROAD)
-                    if(pop == 0)pop = 1;
-            end
-            CHOOSE: begin
-                if(checkPoint1 && detect == 3'b111) pop = 0;
-                else if(checkPoint1 && detect == 3'b101) pop = 1;
-            end
-        endcase
-    end     
+    end   
     always @(*)begin
         case(state)
             IDLE: nextState = (sw[0])? START : IDLE;
