@@ -161,4 +161,5 @@ localparam [4:0]ERROR = 5'd31;
 12: display = 7'b0100001 ; //d
 13: display = 7'b1000111 ; //L
 14: display = 7'b0000110 ; //E
+15: display = 7'b0101111 ; // r
 ``` 

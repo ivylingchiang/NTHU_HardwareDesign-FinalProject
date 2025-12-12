@@ -124,16 +124,16 @@ module mainModule(
                 end
 
                 BACK: begin
-                    num0 = 4'd0;
+                    num0 = 4'd11;
                     num1 = 4'd0;
                     num2 = 4'd0;
                     case(storeState)
                         IDLE: num3 = 4'd12;
-                        STRAIGHT: num3 = 4'd0;
+                        STRAIGHT: num3 = 4'd1;
                         LEFT: num3 = 4'd13;
                         RIGHT: num3 = 4'd15;
-                        BACK: num3 = 4'd13;
-                        default : num3 = 4'd15;
+                        BACK: num3 = 4'd11;
+                        default : num3 = 4'd0;
                     endcase
                 end
 
@@ -144,18 +144,18 @@ module mainModule(
                     num2 = 4'd0;
                     case(storeState)
                         IDLE: num3 = 4'd12;
-                        STRAIGHT: num3 = 4'd0;
+                        STRAIGHT: num3 = 4'd1;
                         LEFT: num3 = 4'd13;
                         RIGHT: num3 = 4'd15;
-                        BACK: num3 = 4'd13;
-                        default : num3 = 4'd15;
+                        BACK: num3 = 4'd11;
+                        default : num3 = 4'd0;
                     endcase
                 end
                 default : begin
-                    num0 = 4'd15;
-                    num1 = 4'd15;
-                    num2 = 4'd15;
-                    num3 = 4'd15;
+                    num0 = 4'd0;
+                    num1 = 4'd0;
+                    num2 = 4'd0;
+                    num3 = 4'd0;
                 end
             endcase
         end
@@ -372,7 +372,7 @@ module mainModule(
                 endcase
             end
 
-            STOP:nextState = (reSTART)? storeState : STOP;
+            STOP: nextState = (reSTART)? storeState : STOP;
          
             ERROR: nextState = (~sw[0]) ? IDLE : ERROR;
             

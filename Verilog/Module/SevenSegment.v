@@ -67,6 +67,7 @@ module SevenSegment(
         12: display = 7'b0100001 ; //d
         13: display = 7'b1000111 ; //L
         14: display = 7'b0000110 ; //E
+				15: display = 7'b0101111 ; // r
 
 			default : display = 7'b1111111; //nothing
     	endcase
