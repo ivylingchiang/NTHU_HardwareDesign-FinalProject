@@ -384,7 +384,6 @@ module mainModule(
                             transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
                         end
                         CHOOSE: begin
-                            transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
                             if(detect == TURN_ROAD101)begin
                                 transitionState = LEFT;
                                 indexAdd = 1;
@@ -392,12 +391,6 @@ module mainModule(
                                 addVal = 2'b10;//LEFT
                             end
                             else transitionState = CHOOSE;
-                            // if(checkPoint1 && detect == 3'b111) pop = 0;
-                            // else if(checkPoint1 && detect == 3'b101) pop = 1;
-                            // if(checkPoint1 && detect == 3'b111)begin
-                            //     indexAdd = 1;
-                            //     addVal = 2'b01;
-                            // end
                         end
                         LEFT: begin
                             if(detect == TURN_ROAD101)begin
@@ -406,12 +399,7 @@ module mainModule(
                                 indexMinus = 1;
                                 addVal = 2'b11;//RIGHT
                             end
-                            else if (detect == TURN_ROAD111)begin
-                                transitionState = STRAIGHT;
-                                // indexAdd = 1;
-                                // indexMinus = 1;
-                                // addVal = 2'b10;//LEFT
-                            end
+                            else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
                             else transitionState = LEFT;
                         end
                         RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
@@ -428,7 +416,7 @@ module mainModule(
                                 indexAdd = 1;
                                 indexMinus = 1;
                                 addVal = 2'b11;//RIGHT
-                            end
+                            end else transitionState = BACK;
                         end
                     endcase
                 end
@@ -437,7 +425,7 @@ module mainModule(
                     if(rst)begin
                         index <= 0;
                         for(rst_index = 0; rst_index <= 49; rst_index = rst_index + 1)begin
-                            mem[rst_index] = 2'b00;
+                            mem[rst_index] <= 2'b00;
                         end
                     end
                     else begin
@@ -572,9 +560,6 @@ module mainModule(
                     shift_reg[1] <= {2'd0, mem[1]};
                     shift_reg[2] <= 4'd0;
                     shift_reg[3] <= 4'd0;
-                    // mem_idx <= 0;
-                    // valid_cnt <= 0;
-                    // done <= 0;
                 end
             end
         // LED Display
