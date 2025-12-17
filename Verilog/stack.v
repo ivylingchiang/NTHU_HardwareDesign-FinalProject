@@ -40,14 +40,14 @@ module stack(
         end
         else if(en)begin
             if(push_en)begin
-                if(index <= 49)begin
+                if(index < 49)begin
                     mem[index] <= push_val;
                     index <= index + 1;
                 end
             end
             
             if(pop_en)begin
-                if(index >= 0)begin
+                if(index > 0)begin
                     mem[index] <= 2'b00;
                     index <= index - 1;
                     pop_val <= mem[index];

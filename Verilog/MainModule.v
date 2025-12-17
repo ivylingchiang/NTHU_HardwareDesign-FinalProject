@@ -79,6 +79,8 @@ module mainModule(
         reg [3:0]num0, num1, num2, num3;
         // TODO
         reg pop, storepop;
+
+
         always @(posedge clk) begin
             if(rst) begin
                 checkPoint1 <= 0;
