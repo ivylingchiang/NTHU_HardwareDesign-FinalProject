@@ -1,5 +1,5 @@
 module clock_divider #(
-    parameter n = 2
+    parameter n = 25
 )(
     input wire  clk,
     output wire clk_div  

@@ -100,7 +100,7 @@ module mainModule(
             wire [15:0]display;
             wire num_override;
             reg [3:0] num0, num1, num2, num3;
-            reg [1:0] shift_reg [0:3];  
+            reg [3:0] shift_reg [0:3];  
             reg [5:0] mem_idx;          
             reg [2:0] valid_cnt; 
             reg done;
@@ -385,17 +385,33 @@ module mainModule(
                         end
                         CHOOSE: begin
                             transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
-                            
+                            if(detect == TURN_ROAD101)begin
+                                transitionState = LEFT;
+                                indexAdd = 1;
+                                indexMinus = 1;
+                                addVal = 2'b10;//LEFT
+                            end
+                            else transitionState = CHOOSE;
                             // if(checkPoint1 && detect == 3'b111) pop = 0;
                             // else if(checkPoint1 && detect == 3'b101) pop = 1;
-                            if(checkPoint1 && detect == 3'b111)begin
-                                indexAdd = 1;
-                                addVal = 2'b01;
-                            end
+                            // if(checkPoint1 && detect == 3'b111)begin
+                            //     indexAdd = 1;
+                            //     addVal = 2'b01;
+                            // end
                         end
                         LEFT: begin
-                            if(detect == TURN_ROAD101) transitionState = RIGHT;
-                            else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
+                            if(detect == TURN_ROAD101)begin
+                                transitionState = RIGHT;
+                                indexAdd = 1;
+                                indexMinus = 1;
+                                addVal = 2'b11;//RIGHT
+                            end
+                            else if (detect == TURN_ROAD111)begin
+                                transitionState = STRAIGHT;
+                                // indexAdd = 1;
+                                // indexMinus = 1;
+                                // addVal = 2'b10;//LEFT
+                            end
                             else transitionState = LEFT;
                         end
                         RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
@@ -529,26 +545,36 @@ module mainModule(
                 end
             always @(posedge clk_update) begin
                 if (state != FINISH) begin
-                    shift_reg[0] <= 2'd0;
-                    shift_reg[1] <= 2'd0;
-                    shift_reg[2] <= 2'd0;
-                    shift_reg[3] <= 2'd0;
+                    shift_reg[0] <= 4'd0;
+                    shift_reg[1] <= 4'd0;
+                    shift_reg[2] <= 4'd0;
+                    shift_reg[3] <= 4'd0;
                     mem_idx <= 0;
+                    valid_cnt <= 0;
+                    done <= 0;
                 end
                 else if (!done) begin
                     shift_reg[3] <= shift_reg[2];
                     shift_reg[2] <= shift_reg[1];
                     shift_reg[1] <= shift_reg[0];
                     if (mem[mem_idx] != 2'd0) begin
-                        shift_reg[0] <= mem[mem_idx];
-                        valid_cnt <= valid_cnt + 1;
+                        shift_reg[0] <={2'd0, mem[mem_idx]};
                     end else begin
-                        shift_reg[0] <= 2'd0;
+                        shift_reg[0] <= 4'd0;
+                        valid_cnt <= valid_cnt + 1;
                     end
                     mem_idx <= mem_idx + 1;
-                    if (mem_idx == LAST_MEM_INDEX && valid_cnt >= 4) begin
+                    if (mem_idx == LAST_MEM_INDEX || valid_cnt >= 4) begin
                         done <= 1'b1;
                     end
+                end else begin
+                    shift_reg[0] <= {2'd0, mem[2]};
+                    shift_reg[1] <= {2'd0, mem[1]};
+                    shift_reg[2] <= 4'd0;
+                    shift_reg[3] <= 4'd0;
+                    // mem_idx <= 0;
+                    // valid_cnt <= 0;
+                    // done <= 0;
                 end
             end
         // LED Display
