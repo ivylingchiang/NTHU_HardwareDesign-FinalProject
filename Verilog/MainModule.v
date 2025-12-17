@@ -41,6 +41,9 @@ module mainModule(
         localparam [2:0]TURN_ROAD101 = 3'b101;
         localparam [2:0]LEFT_LITTLE_ROAD = 3'b100;
         localparam [2:0]TURN_ROAD111 = 3'b111;
+    // Mem
+        parameter MEM_DEPTH = 50;
+        parameter LAST_MEM_INDEX = MEM_DEPTH - 1;
 
   // Signal: wire, reg
     // System signal
@@ -66,12 +69,13 @@ module mainModule(
             reg pop, storepop;
             reg [4:0] index;
             integer rst_index;
-            reg [1:0] mem [0:49];
+            reg [1:0] mem [0:LAST_MEM_INDEX];
             reg indexAdd, indexAdd_s;
             reg indexMinus, indexMinus_s;
             reg [1:0] addVal;
     // Sys.Counter signal
         // Counter Enable signal
+        wire clk_update;
         wire countEnable;
         wire backEn; 
         wire countSTOP;
@@ -93,7 +97,13 @@ module mainModule(
     // IO signal
         // Seven Segment signal
             wire [15:0]nums;
-            reg [3:0]num0, num1, num2, num3;
+            wire [15:0]display;
+            wire num_override;
+            reg [3:0] num0, num1, num2, num3;
+            reg [1:0] shift_reg [0:3];  
+            reg [5:0] mem_idx;          
+            reg [2:0] valid_cnt; 
+            reg done;
         // Led signal
             reg [5:0]led_middle;
             reg [2:0]led_right;
@@ -107,8 +117,9 @@ module mainModule(
         assign countSTOP = (state == STOP) ? 1 : 0;
         assign backEn = (state == BACK) ? 1:0;
     // Led display && SevenSegment
-        assign LED = (mode) ?  {16'b1111_1111_1111_1111}:{led_left,1'd0, led_middle ,1'd0,led_right};
-        assign nums = {num0, num1, num2, num3};
+        assign LED = (state == FINISH) ?  {16'b1111_1111_1111_1111}:{led_left,1'd0, led_middle ,1'd0,led_right};
+        assign nums =  (state == FINISH) ? display : {num0, num1, num2, num3};
+        assign display ={shift_reg[3],shift_reg[2],shift_reg[1],shift_reg[0]};   
   
   // Circuit 
     // Syetem
@@ -361,7 +372,7 @@ module mainModule(
                         endcase
                     end
                 end
-            // "TRANSITIONSTATE" && "POP" Update: Combinational
+            // "TRANSITIONSTATE" && "POP" && "Push/Pop_Stack" Update: Combinational
                 always @(*)begin
                     pop = storepop;
                     transitionState = storeState;
@@ -405,7 +416,7 @@ module mainModule(
                         end
                     endcase
                 end
-            // "TRANSITIONSTATE" && "POP" Update: Sequential
+            // "TRANSITIONSTATE" && "POP" && "STACK" Update: Sequential
                 always@(posedge clk,posedge rst)begin
                     if(rst)begin
                         index <= 0;
@@ -516,6 +527,29 @@ module mainModule(
                         end
                     endcase
                 end
+            always @(posedge clk_update) begin
+                if (state != FINISH) begin
+                    shift_reg[0] <= 2'd0;
+                    shift_reg[1] <= 2'd0;
+                    shift_reg[2] <= 2'd0;
+                    shift_reg[3] <= 2'd0;
+                end
+                else if (!done) begin
+                    shift_reg[3] <= shift_reg[2];
+                    shift_reg[2] <= shift_reg[1];
+                    shift_reg[1] <= shift_reg[0];
+                    if (mem[mem_idx] != 2'd0) begin
+                        shift_reg[0] <= mem[mem_idx];
+                        valid_cnt <= valid_cnt + 1;
+                    end else begin
+                        shift_reg[0] <= 2'd0;
+                    end
+                    mem_idx <= mem_idx + 1;
+                    if (mem_idx == LAST_MEM_INDEX && valid_cnt >= 4) begin
+                        done <= 1'b1;
+                    end
+                end
+            end
         // LED Display
             // led right 3: show detect info
                 always @(*)begin
@@ -567,6 +601,7 @@ module mainModule(
     clockDriver cD( .clk(clk), .countEnable(countEnable), .countFinish(countFinish), .flash(flash), .countDetail(countDetail));
     clockDriver1 cD1( .clk(clk), .countEnable(countSTOP), .flash(reSTART));
     clockDriver2 cD2( .clk(clk), .countEnable(backEn), .flash(flashBack));
+    clock_divider cD3( .clk(clk), .clk_div(clk_update));
     SevenSegment S( .display(DISPLAY), .digit(DIGIT), .nums(nums), .rst(rst), .clk(clk));
     motor A( .clk(clk), .rst(rst), .mode(state), .lastMode(lastState), .pwm({left_pwm, right_pwm}), .l_IN({IN1, IN2}), .r_IN({IN3, IN4}));
     sonic_top B( .clk(clk), .rst(rst), .Echo(echo), .Trig(trig), .distance(distance));

@@ -39,13 +39,13 @@ module PmodJSTK_Demo(
     CLK,
     RST,
     MISO,
-	 SW,
+	 	SW,
     SS,
     MOSI,
     SCLK,
     LED,
-	 AN,
-	 SEG
+	 	AN,
+	 	SEG
     );
 
 	// ===========================================================================

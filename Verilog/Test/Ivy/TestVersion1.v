@@ -17,7 +17,7 @@ module mainModule(
     output wire [3:0]DIGIT,
     output wire [6:0]DISPLAY
 );
-  // Parameter: FSM, Detect tracker
+  // Parameter: FSM, Detect tracker, Mem
     // FSM
         localparam [4:0]IDLE = 5'd0;
         localparam [4:0]START = 5'd1;
@@ -41,6 +41,9 @@ module mainModule(
         localparam [2:0]TURN_ROAD101 = 3'b101;
         localparam [2:0]LEFT_LITTLE_ROAD = 3'b100;
         localparam [2:0]TURN_ROAD111 = 3'b111;
+    // Mem
+        parameter MEM_DEPTH = 50;
+        parameter LAST_MEM_INDEX = MEM_DEPTH - 1;
 
   // Signal: wire, reg
     // System signal
@@ -64,8 +67,10 @@ module mainModule(
             reg checkPoint1,checkPoint2,checkPoint3,checkPoint4, checkPoint5;
         // Stack singal
             reg pop, storepop;
+            reg [1:0] mem [0:49];
     // Sys.Counter signal
         // Counter Enable signal
+        wire clk_update;
         wire countEnable;
         wire backEn; 
         wire countSTOP;
@@ -87,12 +92,17 @@ module mainModule(
     // IO signal
         // Seven Segment signal
             wire [15:0]nums;
-            reg [3:0]num0, num1, num2, num3;
+            wire [15:0]display;
+            wire num_override;
+            reg [3:0] num0, num1, num2, num3;
+            reg [1:0] shift_reg [0:3];  
+            reg [5:0] mem_idx;          
+            reg [2:0] valid_cnt;        
+            reg done;
         // Led signal
             reg [5:0]led_middle;
             reg [2:0]led_right;
-            reg [4:0]led_left;
-  
+            reg [4:0]led_left;  
   // Assign Block
     // Distence
         assign mode = (distance < 2) ? 1 : 0;
@@ -101,8 +111,9 @@ module mainModule(
         assign countSTOP = (state == STOP) ? 1 : 0;
         assign backEn = (state == BACK) ? 1:0;
     // Led display && SevenSegment
-        assign LED = (mode) ?  {16'b1111_1111_1111_1111}:{led_left,1'd0, led_middle ,1'd0,led_right};
-        assign nums = {num0, num1, num2, num3};
+        assign LED = (state == FINISH) ?  {16'b1111_1111_1111_1111}:{led_left,1'd0, led_middle ,1'd0,led_right};
+        assign nums =  (state == FINISH) ? display : {num0, num1, num2, num3};
+        assign display ={shift_reg[3],shift_reg[2],shift_reg[1],shift_reg[0]};       
   
   // Circuit 
     // Syetem
@@ -387,89 +398,107 @@ module mainModule(
     // IO
         // SevenSegment Display
             always @(*)begin
-                    case(state)
-                        IDLE: begin
-                            num0 = 4'd1;
-                            num1 = 4'd12;
-                            num2 = 4'd13;
-                            num3 = 4'd14;
-                        end
-                        START: begin
-                            num0 = 4'd11;
-                            num1 = 4'd11;
-                            num2 = 4'd11;
-                            num3 = 4'd11;
-                        end
-                        COUNT: begin
-                            num0 = 4'd11;
-                            num1 = 4'd11;
-                            num2 = 4'd11;
-                            num3 = 3 - countDetail;
-                        end
-                        STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin //checkPoint2
-                            num0 = 4'd10;
-                            num1 = 4'd2;
-                            num2 = 4'd11;
-                            num3 = (checkPoint2) ? 4'd1:4'd0;
-                        end
-                        CHOOSE: begin
-                            num0 = 4'd10;
-                            num1 = 4'd1;
-                            num2 = 4'd11;
-                            num3 = (checkPoint1) ? 4'd1:4'd0;
-                        end
-                        LEFT: begin
-                            num0 = 4'd10;
-                            num1 = 4'd3;
-                            num2 = 4'd11;
-                            num3 = (checkPoint3) ? 4'd1:4'd0;
-                        end
-                        RIGHT: begin
-                            num0 = 4'd4;
-                            num1 = (checkPoint4) ? 4'd1:4'd0;
-                            num2 = 4'd11;
-                            num3 = (counterRight == 2'd0)? 4'd0: (counterRight == 2'd1) ? 4'd1:4'd2;
-                        end
-                        BACK: begin
-                            num0 = 4'd11; //-
-                            num1 = 4'd0;
-                            num2 = 4'd0;
-                            case(storeState)
-                                IDLE: num3 = 4'd12;
-                                STRAIGHT: num3 = 4'd1;
-                                LEFT: num3 = 4'd13;
-                                RIGHT: num3 = 4'd15;
-                                BACK: num3 = 4'd11; //-
-                                default : num3 = 4'd0;
-                            endcase
-                        end
-                        STOP: begin
-                            num0 = (reSTART)? 4'd1 : 4'd0;
-                            num1 = 4'd0;
-                            num2 = 4'd0;
-                            case(storeState)
-                                IDLE: num3 = 4'd12;
-                                STRAIGHT: num3 = 4'd1;
-                                LEFT: num3 = 4'd13;
-                                RIGHT: num3 = 4'd15;
-                                BACK: num3 = 4'd11;
-                                default : num3 = 4'd0;
-                            endcase
-                        end
-                        FINISH:begin
-                            num0 = 4'd10;
-                            num1 = 4'd10;
-                            num2 = 4'd10;
-                            num3 = 4'd10;
-                        end
-                        default : begin
-                            num0 = 4'd0;
-                            num1 = 4'd0;
-                            num2 = 4'd0;
-                            num3 = 4'd0;
-                        end
-                    endcase
+                case(state)
+                    IDLE: begin
+                        num0 = 4'd1;
+                        num1 = 4'd12;
+                        num2 = 4'd13;
+                        num3 = 4'd14;
+                    end
+                    START: begin
+                        num0 = 4'd11;
+                        num1 = 4'd11;
+                        num2 = 4'd11;
+                        num3 = 4'd11;
+                    end
+                    COUNT: begin
+                        num0 = 4'd11;
+                        num1 = 4'd11;
+                        num2 = 4'd11;
+                        num3 = 3 - countDetail;
+                    end
+                    STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin //checkPoint2
+                        num0 = 4'd10;
+                        num1 = 4'd2;
+                        num2 = 4'd11;
+                        num3 = (checkPoint2) ? 4'd1:4'd0;
+                    end
+                    CHOOSE: begin
+                        num0 = 4'd10;
+                        num1 = 4'd1;
+                        num2 = 4'd11;
+                        num3 = (checkPoint1) ? 4'd1:4'd0;
+                    end
+                    LEFT: begin
+                        num0 = 4'd10;
+                        num1 = 4'd3;
+                        num2 = 4'd11;
+                        num3 = (checkPoint3) ? 4'd1:4'd0;
+                    end
+                    RIGHT: begin
+                        num0 = 4'd4;
+                        num1 = (checkPoint4) ? 4'd1:4'd0;
+                        num2 = 4'd11;
+                        num3 = (counterRight == 2'd0)? 4'd0: (counterRight == 2'd1) ? 4'd1:4'd2;
+                    end
+                    BACK: begin
+                        num0 = 4'd11; //-
+                        num1 = 4'd0;
+                        num2 = 4'd0;
+                        case(storeState)
+                            IDLE: num3 = 4'd12;
+                            STRAIGHT: num3 = 4'd1;
+                            LEFT: num3 = 4'd13;
+                            RIGHT: num3 = 4'd15;
+                            BACK: num3 = 4'd11; //-
+                            default : num3 = 4'd0;
+                        endcase
+                    end
+                    STOP: begin
+                        num0 = (reSTART)? 4'd1 : 4'd0;
+                        num1 = 4'd0;
+                        num2 = 4'd0;
+                        case(storeState)
+                            IDLE: num3 = 4'd12;
+                            STRAIGHT: num3 = 4'd1;
+                            LEFT: num3 = 4'd13;
+                            RIGHT: num3 = 4'd15;
+                            BACK: num3 = 4'd11;
+                            default : num3 = 4'd0;
+                        endcase
+                    end
+                    default : begin
+                        num0 = 4'd0;
+                        num1 = 4'd0;
+                        num2 = 4'd0;
+                        num3 = 4'd0;
+                    end
+                endcase
+            end
+            always @(posedge clk_update) begin
+                if (state != FINISH) begin
+                    shift_reg[0] <= 2'd0;
+                    shift_reg[1] <= 2'd0;
+                    shift_reg[2] <= 2'd0;
+                    shift_reg[3] <= 2'd0;
                 end
+                else if (!done) begin
+                    shift_reg[3] <= shift_reg[2];
+                    shift_reg[2] <= shift_reg[1];
+                    shift_reg[1] <= shift_reg[0];
+                    if (mem[mem_idx] != 2'd0) begin
+                        shift_reg[0] <= mem[mem_idx];
+                        valid_cnt <= valid_cnt + 1;
+                    end else begin
+                        shift_reg[0] <= 2'd0;
+                    end
+                    mem_idx <= mem_idx + 1;
+                    if (mem_idx == 6'd49 && valid_cnt >= 4) begin
+                        done <= 1'b1;
+                    end
+                end
+            end
+
         // LED Display
             // led right 3: show detect info
                 always @(*)begin
@@ -521,6 +550,7 @@ module mainModule(
     clockDriver cD( .clk(clk), .countEnable(countEnable), .countFinish(countFinish), .flash(flash), .countDetail(countDetail));
     clockDriver1 cD1( .clk(clk), .countEnable(countSTOP), .flash(reSTART));
     clockDriver2 cD2( .clk(clk), .countEnable(backEn), .flash(flashBack));
+    clock_divider cD3( .clk(clk), .clk_div(clk_update));
     SevenSegment S( .display(DISPLAY), .digit(DIGIT), .nums(nums), .rst(rst), .clk(clk));
     motor A( .clk(clk), .rst(rst), .mode(state), .lastMode(lastState), .pwm({left_pwm, right_pwm}), .l_IN({IN1, IN2}), .r_IN({IN3, IN4}));
     sonic_top B( .clk(clk), .rst(rst), .Echo(echo), .Trig(trig), .distance(distance));
