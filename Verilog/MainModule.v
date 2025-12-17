@@ -533,6 +533,7 @@ module mainModule(
                     shift_reg[1] <= 2'd0;
                     shift_reg[2] <= 2'd0;
                     shift_reg[3] <= 2'd0;
+                    mem_idx <= 0;
                 end
                 else if (!done) begin
                     shift_reg[3] <= shift_reg[2];
