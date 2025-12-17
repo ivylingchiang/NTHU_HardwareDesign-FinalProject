@@ -49,7 +49,7 @@ module mainModule(
         // FSM signal
             reg [4:0]state, nextState, lastState;
             reg [4:0]transitionState;
-            reg [4:0]storeState;
+            reg [4:0]storeState, lastStoreState;
         // Distence signal
             wire mode;
             wire [19:0] distance;
@@ -64,6 +64,12 @@ module mainModule(
             reg checkPoint1,checkPoint2,checkPoint3,checkPoint4, checkPoint5;
         // Stack singal
             reg pop, storepop;
+            reg [4:0] index;
+            integer rst_index;
+            reg [1:0] mem [0:49];
+            reg indexAdd, indexAdd_s;
+            reg indexMinus, indexMinus_s;
+            reg [1:0] addVal;
     // Sys.Counter signal
         // Counter Enable signal
         wire countEnable;
@@ -152,10 +158,11 @@ module mainModule(
                     checkPoint4 <= 0;
                     checkPoint5 <= 0;
                     storepop <= 0;
-                    storeState <= LEFT;  
+                    storeState <= LEFT; 
                 end else begin
                     storeState <= transitionState;
                     storepop <= pop;
+
                     // if(state == IDLE) begining <= 0;
                     // straight -> choose(only detect 000)
                     if(state == CHOOSE && detect != 3'b111) 
@@ -190,6 +197,7 @@ module mainModule(
                 end
             // "NEXTSTATE" Update: Combinational
                 always @(*)begin
+                    pop = 0;
                     if(mode) nextState = FINISH;
                     else begin
                         case(state)
@@ -357,14 +365,22 @@ module mainModule(
                 always @(*)begin
                     pop = storepop;
                     transitionState = storeState;
+                    indexAdd = 0;
+                    indexMinus = 0;
+                    addVal = 0;
                     case(state)
                         STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
                             transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
                         end
                         CHOOSE: begin
                             transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
-                            if(checkPoint1 && detect == 3'b111) pop = 0;
-                            else if(checkPoint1 && detect == 3'b101) pop = 1;
+                            
+                            // if(checkPoint1 && detect == 3'b111) pop = 0;
+                            // else if(checkPoint1 && detect == 3'b101) pop = 1;
+                            if(checkPoint1 && detect == 3'b111)begin
+                                indexAdd = 1;
+                                addVal = 2'b01;
+                            end
                         end
                         LEFT: begin
                             if(detect == TURN_ROAD101) transitionState = RIGHT;
@@ -374,16 +390,46 @@ module mainModule(
                         RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
                         BACK: begin
                             // pop value assign next transition
-                            if(detect == TURN_ROAD111 && storepop == 0)begin
+                            if(detect == TURN_ROAD111 && mem[index] == 1)begin
                                 transitionState = LEFT;
-                                pop =  1 ;
+                                indexAdd = 1;
+                                indexMinus = 1;
+                                addVal = 2'b10;//LEFT
                             end
-                            else if(detect == TURN_ROAD111 && storepop) begin
+                            else if(detect == TURN_ROAD111 && mem[index] == 2)begin
                                 transitionState = RIGHT;
+                                indexAdd = 1;
+                                indexMinus = 1;
+                                addVal = 2'b11;//RIGHT
                             end
                         end
                     endcase
                 end
+            // "TRANSITIONSTATE" && "POP" Update: Sequential
+                always@(posedge clk,posedge rst)begin
+                    if(rst)begin
+                        index <= 0;
+                        for(rst_index = 0; rst_index <= 49; rst_index = rst_index + 1)begin
+                            mem[rst_index] = 2'b00;
+                        end
+                    end
+                    else begin
+                        indexAdd_s <= indexAdd;
+                        indexMinus_s <= indexMinus;
+                        if(!indexAdd_s && indexAdd && !indexMinus_s && indexMinus)begin
+                            mem[index] <= addVal;
+                        end
+                        else if(!indexAdd_s && indexAdd)begin
+                            mem[index + 1] <= addVal;
+                            index <= index + 1;
+                        end
+                        else if(!indexMinus_s && indexMinus)begin
+                            mem[index] = 2'b00;
+                            index <= index - 1;
+                        end
+                    end
+                end
+
     // IO
         // SevenSegment Display
             always @(*)begin
