@@ -9,7 +9,6 @@ module stack(
 );
     reg [4:0] index;
     logic [1:0] mem [0:49];
-
     integer rst_index;
 
     reg push_s;
