@@ -64,7 +64,7 @@ module motor(
                 end
                 STRAIGHT: begin
                     left_motor <= 10'd750;
-                    right_motor <= 10'd740;
+                    right_motor <= 10'd730;
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end

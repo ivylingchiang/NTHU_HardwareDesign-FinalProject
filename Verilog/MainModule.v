@@ -42,6 +42,9 @@ module mainModule(
         localparam [2:0]LEFT_LITTLE_ROAD = 3'b100;
         localparam [2:0]TURN_ROAD111 = 3'b111;
     // Mem
+        localparam [1:0] DEC_STRAIGHT  = 2'b01;
+        localparam [1:0] DEC_LEFT  = 2'b10;
+        localparam [1:0] DEC_RIGHT = 2'b11;
         parameter MEM_DEPTH = 50;
         parameter LAST_MEM_INDEX = MEM_DEPTH - 1;
 
@@ -70,8 +73,8 @@ module mainModule(
             reg [4:0] index;
             integer rst_index;
             reg [1:0] mem [0:LAST_MEM_INDEX];
-            reg indexAdd, indexAdd_s;
-            reg indexMinus, indexMinus_s;
+            reg pushDecision, pushDecision_s;
+            reg popDecision, popDecision_s;
             reg [1:0] addVal;
     // Sys.Counter signal
         // Counter Enable signal
@@ -122,7 +125,7 @@ module mainModule(
         assign display ={shift_reg[3],shift_reg[2],shift_reg[1],shift_reg[0]};   
   
   // Circuit 
-    // Syetem
+    // System
         // Sys.Counter Update
             // #turn right
                 always @(posedge clk)begin
@@ -168,11 +171,11 @@ module mainModule(
                     checkPoint3 <= 0;
                     checkPoint4 <= 0;
                     checkPoint5 <= 0;
-                    storepop <= 0;
+                    // storepop <= 0;
                     storeState <= LEFT; 
                 end else begin
                     storeState <= transitionState;
-                    storepop <= pop;
+                    // storepop <= pop;
 
                     // if(state == IDLE) begining <= 0;
                     // straight -> choose(only detect 000)
@@ -374,30 +377,34 @@ module mainModule(
                 end
             // "TRANSITIONSTATE" && "POP" && "Push/Pop_Stack" Update: Combinational
                 always @(*)begin
-                    pop = storepop;
+                    // pop = storepop;
                     transitionState = storeState;
-                    indexAdd = 0;
-                    indexMinus = 0;
+                    pushDecision = 0;
+                    popDecision = 0;
                     addVal = 0;
                     case(state)
                         STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
                             transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
+                            if(detect == TURN_ROAD111 && checkPoint2)begin
+                                pushDecision = 1;
+                                addVal = DEC_STRAIGHT;
+                            end
                         end
                         CHOOSE: begin
                             if(detect == TURN_ROAD101)begin
                                 transitionState = LEFT;
-                                indexAdd = 1;
-                                indexMinus = 1;
-                                addVal = 2'b10;//LEFT
+                                pushDecision = 1;
+                                popDecision = 1;
+                                addVal = DEC_LEFT;//LEFT
                             end
                             else transitionState = CHOOSE;
                         end
                         LEFT: begin
                             if(detect == TURN_ROAD101)begin
                                 transitionState = RIGHT;
-                                indexAdd = 1;
-                                indexMinus = 1;
-                                addVal = 2'b11;//RIGHT
+                                pushDecision = 1;
+                                popDecision = 1;
+                                addVal = DEC_RIGHT;//RIGHT
                             end
                             else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
                             else transitionState = LEFT;
@@ -405,17 +412,17 @@ module mainModule(
                         RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
                         BACK: begin
                             // pop value assign next transition
-                            if(detect == TURN_ROAD111 && mem[index] == 1)begin
+                            if(detect == TURN_ROAD111 && mem[index] == DEC_STRAIGHT)begin
                                 transitionState = LEFT;
-                                indexAdd = 1;
-                                indexMinus = 1;
-                                addVal = 2'b10;//LEFT
+                                pushDecision = 1;
+                                popDecision = 1;
+                                addVal = DEC_LEFT;//LEFT
                             end
-                            else if(detect == TURN_ROAD111 && mem[index] == 2)begin
+                            else if(detect == TURN_ROAD111 && mem[index] == DEC_LEFT)begin
                                 transitionState = RIGHT;
-                                indexAdd = 1;
-                                indexMinus = 1;
-                                addVal = 2'b11;//RIGHT
+                                pushDecision = 1;
+                                popDecision = 1;
+                                addVal = DEC_RIGHT;//RIGHT
                             end else transitionState = BACK;
                         end
                     endcase
@@ -427,26 +434,40 @@ module mainModule(
                         for(rst_index = 0; rst_index <= 49; rst_index = rst_index + 1)begin
                             mem[rst_index] <= 2'b00;
                         end
+
+                        pushDecision_s <= 0;
+                        popDecision_s <= 0;
                     end
                     else begin
-                        indexAdd_s <= indexAdd;
-                        indexMinus_s <= indexMinus;
-                        if(!indexAdd_s && indexAdd && !indexMinus_s && indexMinus)begin
+                        pushDecision_s <= pushDecision;
+                        popDecision_s <= popDecision;
+                        if(!pushDecision_s && pushDecision && !popDecision_s && popDecision)begin
                             mem[index] <= addVal;
                         end
-                        else if(!indexAdd_s && indexAdd)begin
-                            mem[index + 1] <= addVal;
-                            index <= index + 1;
+                        else if(!pushDecision_s && pushDecision)begin
+                            if(index < MEM_DEPTH - 1)begin
+                                mem[index + 1] <= addVal;
+                                index <= index + 1;
+                            end
                         end
-                        else if(!indexMinus_s && indexMinus)begin
-                            mem[index] = 2'b00;
-                            index <= index - 1;
+                        else if(!popDecision_s && popDecision)begin
+                            if(index > 0)begin
+                                mem[index] <= 2'b00;
+                                index <= index - 1;
+                            end
                         end
                     end
                 end
 
     // IO
         // SevenSegment Display
+            //stack status
+            // always@(*)begin
+            //     num0 = {2'b0,mem[1]};
+            //     num1 = {2'b0,mem[2]};
+            //     num2 = {2'b0,mem[3]};
+            //     num3 = {2'b0,mem[4]};
+            // end
             always @(*)begin
                     case(state)
                         IDLE: begin
