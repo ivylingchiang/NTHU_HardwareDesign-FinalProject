@@ -69,7 +69,7 @@ module mainModule(
             // cp5: from choose(101) to left(101)
             reg checkPoint1,checkPoint2,checkPoint3,checkPoint4, checkPoint5;
         // Stack singal
-            reg pop, storepop;
+            reg pop;
             reg [4:0] index;
             integer rst_index;
             reg [1:0] mem [0:LAST_MEM_INDEX];
@@ -171,12 +171,9 @@ module mainModule(
                     checkPoint3 <= 0;
                     checkPoint4 <= 0;
                     checkPoint5 <= 0;
-                    // storepop <= 0;
                     storeState <= LEFT; 
                 end else begin
                     storeState <= transitionState;
-                    // storepop <= pop;
-
                     // if(state == IDLE) begining <= 0;
                     // straight -> choose(only detect 000)
                     if(state == CHOOSE && detect != 3'b111) 
@@ -228,7 +225,6 @@ module mainModule(
                                 // Transform state(2)
                                     ERROR_ROAD: begin 
                                         // transitionState = BACK;
-                                        // TODO : pop
                                         nextState =  STOP;                        
                                     end
                                     TURN_ROAD111: nextState = (checkPoint2) ? CHOOSE : STRAIGHT;
@@ -377,7 +373,6 @@ module mainModule(
                 end
             // "TRANSITIONSTATE" && "POP" && "Push/Pop_Stack" Update: Combinational
                 always @(*)begin
-                    // pop = storepop;
                     transitionState = storeState;
                     pushDecision = 0;
                     popDecision = 0;
@@ -395,7 +390,7 @@ module mainModule(
                                 transitionState = LEFT;
                                 pushDecision = 1;
                                 popDecision = 1;
-                                addVal = DEC_LEFT;//LEFT
+                                addVal = DEC_LEFT;
                             end
                             else transitionState = CHOOSE;
                         end
@@ -404,7 +399,7 @@ module mainModule(
                                 transitionState = RIGHT;
                                 pushDecision = 1;
                                 popDecision = 1;
-                                addVal = DEC_RIGHT;//RIGHT
+                                addVal = DEC_RIGHT;
                             end
                             else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
                             else transitionState = LEFT;
@@ -416,13 +411,13 @@ module mainModule(
                                 transitionState = LEFT;
                                 pushDecision = 1;
                                 popDecision = 1;
-                                addVal = DEC_LEFT;//LEFT
+                                addVal = DEC_LEFT;
                             end
                             else if(detect == TURN_ROAD111 && mem[index] == DEC_LEFT)begin
                                 transitionState = RIGHT;
                                 pushDecision = 1;
                                 popDecision = 1;
-                                addVal = DEC_RIGHT;//RIGHT
+                                addVal = DEC_RIGHT;
                             end else transitionState = BACK;
                         end
                     endcase
