@@ -384,7 +384,7 @@ module mainModule(
                             transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
                         end
                         CHOOSE: begin
-                            transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
+                            // transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
                             if(detect == TURN_ROAD101)begin
                                 transitionState = LEFT;
                                 indexAdd = 1;
