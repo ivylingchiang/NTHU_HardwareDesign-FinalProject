@@ -7,6 +7,10 @@ module mainModule(
     input mid_track,
     input wire [15:0]sw,
     output wire [15:0]LED,
+    input wire MISO,
+    output wire SS,
+    output wire MOSI,
+    output wire SCLK,
     output trig,
     output IN1,
     output IN2,
@@ -76,6 +80,8 @@ module mainModule(
             reg pushDecision, pushDecision_s;
             reg popDecision, popDecision_s;
             reg [1:0] addVal;
+        // Joystick signal
+            wire [1:0] joyStickDir;
     // Sys.Counter signal
         // Counter Enable signal
         wire clk_update;
@@ -466,10 +472,14 @@ module mainModule(
             always @(*)begin
                     case(state)
                         IDLE: begin
-                            num0 = 4'd1;
-                            num1 = 4'd12;
-                            num2 = 4'd13;
-                            num3 = 4'd14;
+                            // num0 = 4'd1;
+                            // num1 = 4'd12;
+                            // num2 = 4'd13;
+                            // num3 = 4'd14;
+                            num0 = 4'd0;
+                            num1 = 4'd0;
+                            num2 = 4'd0;
+                            num3 = {2'b00,joyStickDir};
                         end
                         START: begin
                             num0 = 4'd11;
@@ -634,4 +644,5 @@ module mainModule(
     motor A( .clk(clk), .rst(rst), .mode(state), .lastMode(lastState), .pwm({left_pwm, right_pwm}), .l_IN({IN1, IN2}), .r_IN({IN3, IN4}));
     sonic_top B( .clk(clk), .rst(rst), .Echo(echo), .Trig(trig), .distance(distance));
     tracker_sensor C( .clk(clk), .reset(rst), .left_track(left_track), .mid_track(mid_track), .right_track(right_track), .detect_road(detect));
+    PmodJSTK_TOP JSTK_inst( .CLK(clk), .RST(rst), .SS(SS), .MOSI(MOSI), .MISO(MISO), .SCLK(SCLK), .DIRECTION(joyStickDir));
 endmodule

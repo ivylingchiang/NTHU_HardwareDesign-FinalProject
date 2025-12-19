@@ -205,19 +205,19 @@ set_property IOSTANDARD LVCMOS33 [get_ports {LED[15]}]
 #    set_property IOSTANDARD LVCMOS33 [get_ports {JC[7]}]
 
 
-## Pmod Header JXADC
-## Sch name = XA1_P
-# set_property PACKAGE_PIN J3 [get_ports {JXADC[0]}]
-#    set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[0]}]
-## Sch name = XA2_P
-# set_property PACKAGE_PIN L3 [get_ports {JXADC[1]}]
-#    set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[1]}]
-## Sch name = XA3_P
-# set_property PACKAGE_PIN M2 [get_ports {ble_tx}]
-#    set_property IOSTANDARD LVCMOS33 [get_ports {ble_tx}]
-## Sch name = XA4_P
-# set_property PACKAGE_PIN N2 [get_ports {ble_rx}]
-#   set_property IOSTANDARD LVCMOS33 [get_ports {ble_rx}]
+# Pmod Header JXADC
+# Sch name = XA1_P
+set_property PACKAGE_PIN J3 [get_ports {SS}]
+   set_property IOSTANDARD LVCMOS33 [get_ports {SS}]
+# Sch name = XA2_P
+set_property PACKAGE_PIN L3 [get_ports {MOSI}]
+   set_property IOSTANDARD LVCMOS33 [get_ports {MOSI}]
+# Sch name = XA3_P
+set_property PACKAGE_PIN M2 [get_ports {MISO}]
+   set_property IOSTANDARD LVCMOS33 [get_ports {MISO}]
+# Sch name = XA4_P
+set_property PACKAGE_PIN N2 [get_ports {SCLK}]
+  set_property IOSTANDARD LVCMOS33 [get_ports {SCLK}]
 #   set_property PULLUP true [get_ports ble_rx]
 ## Sch name = XA1_N
 # set_property PACKAGE_PIN K3 [get_ports {JXADC[4]}]
