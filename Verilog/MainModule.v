@@ -82,6 +82,7 @@ module mainModule(
             reg [1:0] addVal;
         // Joystick signal
             wire [1:0] joyStickDir;
+            wire joyStickButton;
     // Sys.Counter signal
         // Counter Enable signal
             wire clk_update;
@@ -462,6 +463,7 @@ module mainModule(
 
     // IO
         // SevenSegment Display
+<<<<<<< HEAD
             always @(*)begin
                     case(state)
                         IDLE: begin
@@ -550,6 +552,98 @@ module mainModule(
                         end
                     endcase
             end
+=======
+            always@(*)begin
+                num0 = (joyStickButton)? 4'd1 : 4'd0;
+                num1 = 0;
+                num2 = 0;
+                num3 = {2'b00,joyStickDir};
+            end
+            // always @(*)begin
+            //         case(state)
+            //             IDLE: begin
+            //                 num0 = 4'd1;
+            //                 num1 = 4'd12;
+            //                 num2 = 4'd13;
+            //                 num3 = 4'd14;
+            //             end
+            //             START: begin
+            //                 num0 = 4'd11;
+            //                 num1 = 4'd11;
+            //                 num2 = 4'd11;
+            //                 num3 = 4'd11;
+            //             end
+            //             COUNT: begin
+            //                 num0 = 4'd11;
+            //                 num1 = 4'd11;
+            //                 num2 = 4'd11;
+            //                 num3 = 3 - countDetail;
+            //             end
+            //             STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin //checkPoint2
+            //                 num0 = 4'd10;
+            //                 num1 = 4'd2;
+            //                 num2 = 4'd11;
+            //                 num3 = (checkPoint2) ? 4'd1:4'd0;
+            //             end
+            //             CHOOSE: begin
+            //                 num0 = 4'd10;
+            //                 num1 = 4'd1;
+            //                 num2 = 4'd11;
+            //                 num3 = (checkPoint1) ? 4'd1:4'd0;
+            //             end
+            //             LEFT: begin
+            //                 num0 = 4'd10;
+            //                 num1 = 4'd3;
+            //                 num2 = 4'd11;
+            //                 num3 = (checkPoint3) ? 4'd1:4'd0;
+            //             end
+            //             RIGHT: begin
+            //                 num0 = 4'd4;
+            //                 num1 = (checkPoint4) ? 4'd1:4'd0;
+            //                 num2 = 4'd11;
+            //                 num3 = (counterRight == 2'd0)? 4'd0: (counterRight == 2'd1) ? 4'd1:4'd2;
+            //             end
+            //             BACK: begin
+            //                 num0 = 4'd11; //-
+            //                 num1 = 4'd0;
+            //                 num2 = 4'd0;
+            //                 case(storeState)
+            //                     IDLE: num3 = 4'd12;
+            //                     STRAIGHT: num3 = 4'd1;
+            //                     LEFT: num3 = 4'd13;
+            //                     RIGHT: num3 = 4'd15;
+            //                     BACK: num3 = 4'd11; //-
+            //                     default : num3 = 4'd0;
+            //                 endcase
+            //             end
+            //             STOP: begin
+            //                 num0 = (reSTART)? 4'd1 : 4'd0;
+            //                 num1 = 4'd0;
+            //                 num2 = 4'd0;
+            //                 case(storeState)
+            //                     IDLE: num3 = 4'd12;
+            //                     STRAIGHT: num3 = 4'd1;
+            //                     LEFT: num3 = 4'd13;
+            //                     RIGHT: num3 = 4'd15;
+            //                     BACK: num3 = 4'd11;
+            //                     default : num3 = 4'd0;
+            //                 endcase
+            //             end
+            //             FINISH:begin
+            //                 num0 = 4'd10;
+            //                 num1 = 4'd10;
+            //                 num2 = 4'd10;
+            //                 num3 = 4'd10;
+            //             end
+            //             default : begin
+            //                 num0 = 4'd0;
+            //                 num1 = 4'd0;
+            //                 num2 = 4'd0;
+            //                 num3 = 4'd0;
+            //             end
+            //         endcase
+            //     end
+>>>>>>> stack_new
             always @(posedge clk_update) begin
                 if (state != FINISH) begin
                     shift_reg[0] <= 4'd0;
@@ -637,5 +731,5 @@ module mainModule(
     motor A( .clk(clk), .rst(rst), .mode(state), .lastMode(lastState), .pwm({left_pwm, right_pwm}), .l_IN({IN1, IN2}), .r_IN({IN3, IN4}));
     sonic_top B( .clk(clk), .rst(rst), .Echo(echo), .Trig(trig), .distance(distance));
     tracker_sensor C( .clk(clk), .reset(rst), .left_track(left_track), .mid_track(mid_track), .right_track(right_track), .detect_road(detect));
-    PmodJSTK_TOP JSTK_inst( .CLK(clk), .RST(rst), .SS(SS), .MOSI(MOSI), .MISO(MISO), .SCLK(SCLK), .DIRECTION(joyStickDir));
+    PmodJSTK_TOP JSTK_inst( .CLK(clk), .RST(rst), .SS(SS), .MOSI(MOSI), .MISO(MISO), .SCLK(SCLK), .DIRECTION(joyStickDir), .BUTTON(joyStickButton));
 endmodule

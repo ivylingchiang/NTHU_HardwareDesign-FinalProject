@@ -5,7 +5,12 @@ module PmodJSTK_TOP(
     MISO,
     MOSI,
     SCLK,
+<<<<<<< HEAD
 		DIRECTION
+=======
+	DIRECTION,
+	BUTTON
+>>>>>>> stack_new
     );
 	//參考網址:https://www.instructables.com/How-to-Use-the-PmodJSTK-With-the-Basys3-FPGA/
 	// ===========================================================================
@@ -13,11 +18,12 @@ module PmodJSTK_TOP(
 	// ===========================================================================
 			input wire CLK;					// 100Mhz onboard clock
 			input wire RST;					// Button D
-			input wire MISO;					// Master In Slave Out, Pin 3, Port JA
+			input wire MISO;
+			output wire BUTTON;					// Master In Slave Out, Pin 3, Port JA
 			output wire SS;					// Slave Select, Pin 1, Port JA
 			output wire MOSI;				// Master Out Slave In, Pin 2, Port JA
 			output wire SCLK;				// Serial Clock, Pin 4, Port JA
-			output wire DIRECTION;
+			output wire [1:0] DIRECTION;
 
 	// ===========================================================================
 	// 							  Parameters, Regsiters, and Wires
@@ -57,6 +63,8 @@ module PmodJSTK_TOP(
 			assign yAxis = {jstkData[25:24], jstkData[39:32]};
 			// Data to be sent to PmodJSTK, lower two bits will turn on leds on PmodJSTK
 			assign sndData = 8'b10000000;
+			assign BUTTON = jstkData[1];
+			assign DIRECTION = curPos;
 
 			always@(posedge CLK,posedge RST)begin
 				if(RST)begin
