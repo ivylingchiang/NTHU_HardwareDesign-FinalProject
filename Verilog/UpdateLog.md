@@ -63,9 +63,14 @@
   1. finish BASIC map
 ```
 
-## 20251217
+## ~20251219
 ```
+[Simon]
+  1. stack update finish
+  2. Pmod module updat in idle
 
+[Ivy]
+  1. Complete led, Seven Segment Display
 ```
 
 
