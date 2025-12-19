@@ -84,16 +84,16 @@ module mainModule(
             wire [1:0] joyStickDir;
     // Sys.Counter signal
         // Counter Enable signal
-        wire clk_update;
-        wire countEnable;
-        wire backEn; 
-        wire countSTOP;
+            wire clk_update;
+            wire countEnable;
+            wire backEn; 
+            wire countSTOP;
         // Counter Return
-        wire flash;
-        wire countFinish;
-        wire [1:0]countDetail;
-        wire reSTART;
-        wire flashBack;
+            wire flash;
+            wire countFinish;
+            wire [1:0]countDetail;
+            wire reSTART;
+            wire flashBack;
         // Main module counter
             // #turn right
             reg [1:0]counterRight;
@@ -462,13 +462,6 @@ module mainModule(
 
     // IO
         // SevenSegment Display
-            //stack status
-            // always@(*)begin
-            //     num0 = {2'b0,mem[1]};
-            //     num1 = {2'b0,mem[2]};
-            //     num2 = {2'b0,mem[3]};
-            //     num3 = {2'b0,mem[4]};
-            // end
             always @(*)begin
                     case(state)
                         IDLE: begin
@@ -556,7 +549,7 @@ module mainModule(
                             num3 = 4'd0;
                         end
                     endcase
-                end
+            end
             always @(posedge clk_update) begin
                 if (state != FINISH) begin
                     shift_reg[0] <= 4'd0;

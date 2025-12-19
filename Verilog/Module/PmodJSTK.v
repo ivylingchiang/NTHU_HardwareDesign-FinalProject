@@ -5,7 +5,7 @@ module PmodJSTK_TOP(
     MISO,
     MOSI,
     SCLK,
-	DIRECTION
+		DIRECTION
     );
 	//參考網址:https://www.instructables.com/How-to-Use-the-PmodJSTK-With-the-Basys3-FPGA/
 	// ===========================================================================
