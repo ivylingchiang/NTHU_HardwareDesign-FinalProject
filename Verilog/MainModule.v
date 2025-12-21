@@ -33,6 +33,9 @@ module mainModule(
         localparam [4:0]BACK = 5'd7;
         localparam [4:0]LITTLE_LEFT = 5'd8;
         localparam [4:0]LITTLE_RIGHT = 5'd9;
+        localparam [4:0]CHOOSE_DIR_STEP1 =  5'd10;
+        localparam [4:0]CHOOSE_DIR_STEP2 =  5'd11;
+        localparam [4:0]CHOOSE_DIR_STEP3 =  5'd12;
         localparam [4:0]FINISH = 5'd29;
         localparam [4:0]STOP = 5'd30;
         localparam [4:0]ERROR = 5'd31;
@@ -83,6 +86,9 @@ module mainModule(
         // Joystick signal
             wire [1:0] joyStickDir;
             wire joyStickButton;
+            reg joyStickButton_s;
+            wire pressButton;
+            reg [4:0]chosenState;
     // Sys.Counter signal
         // Counter Enable signal
             wire clk_update;
@@ -130,7 +136,9 @@ module mainModule(
         assign LED = (state == FINISH) ?  {16'b1111_1111_1111_1111}:{led_left,1'd0, led_middle ,1'd0,led_right};
         assign nums =  (state == FINISH) ? display : {num0, num1, num2, num3};
         assign display ={shift_reg[3],shift_reg[2],shift_reg[1],shift_reg[0]};   
-  
+    // Joystick
+        assign pressButton = (!joyStickButton_s && joyStickButton) ;
+
   // Circuit 
     // System
         // Sys.Counter Update
@@ -202,6 +210,25 @@ module mainModule(
                 end
             end
         // FSM
+            // "CHOOSE" Update:sequential
+                always@(posedge clk,posedge rst)begin
+                    if(rst)begin
+                        joyStickButton_s <= 0;
+                        chosenState <= STRAIGHT;
+                    end
+                    else begin
+                        joyStickButton_s <= joyStickButton;
+                        if(state == CHOOSE_DIR_STEP1)begin
+                            if(pressButton)begin
+                                case(joyStickDir)
+                                2'b01:chosenState <= RIGHT;
+                                2'b11:chosenState <= LEFT;
+                                default:chosenState <= STRAIGHT;
+                                endcase
+                            end
+                        end
+                    end
+                end
             // "STATE" Update: Sequencial
                 always @(posedge clk or posedge rst)begin
                     if(rst || sw[0] == 0) state <= IDLE;
@@ -253,7 +280,14 @@ module mainModule(
                                         // transitionState = LEFT;
                                         nextState = STOP;                        
                                     end
-                                    TURN_ROAD111: nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                                    TURN_ROAD111:begin//nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                                        if(sw[1])begin
+                                            nextState = (checkPoint1)? CHOOSE_DIR_STEP1 : CHOOSE;
+                                        end
+                                        else begin
+                                            nextState = (checkPoint1)? STRAIGHT : CHOOSE;
+                                        end
+                                    end
                                 // Nothing Change(6)
                                     ERROR_ROAD: nextState = CHOOSE;
                                     RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = CHOOSE;
@@ -262,6 +296,25 @@ module mainModule(
                                     default :  nextState = CHOOSE;
                                 endcase
                             end
+                            CHOOSE_DIR_STEP1:begin
+                                if(pressButton)begin
+                                    case(joyStickDir)
+                                    2'b00:nextState = STRAIGHT;
+                                    // 2'b01:chosenState = RIGHT;
+                                    // 2'b11:chosenState = LEFT;
+                                    default:nextState = CHOOSE_DIR_STEP2;
+                                    endcase
+                                end
+                                else nextState = CHOOSE_DIR_STEP1;
+                            end
+                            CHOOSE_DIR_STEP2:begin
+                                if(detect != 3'b111)nextState = CHOOSE_DIR_STEP3;
+                                else nextState = CHOOSE_DIR_STEP2;
+                            end
+                            CHOOSE_DIR_STEP3:begin
+                                nextState = chosenState;
+                            end
+                        
                             
                             LEFT:begin
                                 case(detect)
@@ -318,7 +371,7 @@ module mainModule(
                                 // Transform state(2)
                                     TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
                                     TURN_ROAD111: begin
-                                        if(checkPoint4 && DoneRight)begin
+                                        if(checkPoint4 && (sw[1] || DoneRight))begin
                                             // transitionState = STRAIGHT;
                                             nextState = STOP;
                                         end else nextState = RIGHT;
@@ -463,187 +516,98 @@ module mainModule(
 
     // IO
         // SevenSegment Display
-<<<<<<< HEAD
             always @(*)begin
-                    case(state)
-                        IDLE: begin
-                            // num0 = 4'd1;
-                            // num1 = 4'd12;
-                            // num2 = 4'd13;
-                            // num3 = 4'd14;
-                            num0 = 4'd0;
-                            num1 = 4'd0;
-                            num2 = 4'd0;
-                            num3 = {2'b00,joyStickDir};
-                        end
-                        START: begin
-                            num0 = 4'd11;
-                            num1 = 4'd11;
-                            num2 = 4'd11;
-                            num3 = 4'd11;
-                        end
-                        COUNT: begin
-                            num0 = 4'd11;
-                            num1 = 4'd11;
-                            num2 = 4'd11;
-                            num3 = 3 - countDetail;
-                        end
-                        STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin //checkPoint2
-                            num0 = 4'd10;
-                            num1 = 4'd2;
-                            num2 = 4'd11;
-                            num3 = (checkPoint2) ? 4'd1:4'd0;
-                        end
-                        CHOOSE: begin
-                            num0 = 4'd10;
-                            num1 = 4'd1;
-                            num2 = 4'd11;
-                            num3 = (checkPoint1) ? 4'd1:4'd0;
-                        end
-                        LEFT: begin
-                            num0 = 4'd10;
-                            num1 = 4'd3;
-                            num2 = 4'd11;
-                            num3 = (checkPoint3) ? 4'd1:4'd0;
-                        end
-                        RIGHT: begin
-                            num0 = 4'd4;
-                            num1 = (checkPoint4) ? 4'd1:4'd0;
-                            num2 = 4'd11;
-                            num3 = (counterRight == 2'd0)? 4'd0: (counterRight == 2'd1) ? 4'd1:4'd2;
-                        end
-                        BACK: begin
-                            num0 = 4'd11; //-
-                            num1 = 4'd0;
-                            num2 = 4'd0;
-                            case(storeState)
-                                IDLE: num3 = 4'd12;
-                                STRAIGHT: num3 = 4'd1;
-                                LEFT: num3 = 4'd13;
-                                RIGHT: num3 = 4'd15;
-                                BACK: num3 = 4'd11; //-
-                                default : num3 = 4'd0;
-                            endcase
-                        end
-                        STOP: begin
-                            num0 = (reSTART)? 4'd1 : 4'd0;
-                            num1 = 4'd0;
-                            num2 = 4'd0;
-                            case(storeState)
-                                IDLE: num3 = 4'd12;
-                                STRAIGHT: num3 = 4'd1;
-                                LEFT: num3 = 4'd13;
-                                RIGHT: num3 = 4'd15;
-                                BACK: num3 = 4'd11;
-                                default : num3 = 4'd0;
-                            endcase
-                        end
-                        FINISH:begin
-                            num0 = 4'd10;
-                            num1 = 4'd10;
-                            num2 = 4'd10;
-                            num3 = 4'd10;
-                        end
-                        default : begin
-                            num0 = 4'd0;
-                            num1 = 4'd0;
-                            num2 = 4'd0;
-                            num3 = 4'd0;
-                        end
-                    endcase
-            end
-=======
-            always@(*)begin
-                num0 = (joyStickButton)? 4'd1 : 4'd0;
-                num1 = 0;
-                num2 = 0;
+                num0 = 4'd0;
+                num1 = 4'd0;
+                num2 = 4'd0;
                 num3 = {2'b00,joyStickDir};
+                    // case(state)
+                    //     IDLE: begin
+                    //         // num0 = 4'd1;
+                    //         // num1 = 4'd12;
+                    //         // num2 = 4'd13;
+                    //         // num3 = 4'd14;
+                    //         num0 = 4'd0;
+                    //         num1 = 4'd0;
+                    //         num2 = 4'd0;
+                    //         num3 = {2'b00,joyStickDir};
+                    //     end
+                    //     START: begin
+                    //         num0 = 4'd11;
+                    //         num1 = 4'd11;
+                    //         num2 = 4'd11;
+                    //         num3 = 4'd11;
+                    //     end
+                    //     COUNT: begin
+                    //         num0 = 4'd11;
+                    //         num1 = 4'd11;
+                    //         num2 = 4'd11;
+                    //         num3 = 3 - countDetail;
+                    //     end
+                    //     STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin //checkPoint2
+                    //         num0 = 4'd10;
+                    //         num1 = 4'd2;
+                    //         num2 = 4'd11;
+                    //         num3 = (checkPoint2) ? 4'd1:4'd0;
+                    //     end
+                    //     CHOOSE: begin
+                    //         num0 = 4'd10;
+                    //         num1 = 4'd1;
+                    //         num2 = 4'd11;
+                    //         num3 = (checkPoint1) ? 4'd1:4'd0;
+                    //     end
+                    //     LEFT: begin
+                    //         num0 = 4'd10;
+                    //         num1 = 4'd3;
+                    //         num2 = 4'd11;
+                    //         num3 = (checkPoint3) ? 4'd1:4'd0;
+                    //     end
+                    //     RIGHT: begin
+                    //         num0 = 4'd4;
+                    //         num1 = (checkPoint4) ? 4'd1:4'd0;
+                    //         num2 = 4'd11;
+                    //         num3 = (counterRight == 2'd0)? 4'd0: (counterRight == 2'd1) ? 4'd1:4'd2;
+                    //     end
+                    //     BACK: begin
+                    //         num0 = 4'd11; //-
+                    //         num1 = 4'd0;
+                    //         num2 = 4'd0;
+                    //         case(storeState)
+                    //             IDLE: num3 = 4'd12;
+                    //             STRAIGHT: num3 = 4'd1;
+                    //             LEFT: num3 = 4'd13;
+                    //             RIGHT: num3 = 4'd15;
+                    //             BACK: num3 = 4'd11; //-
+                    //             default : num3 = 4'd0;
+                    //         endcase
+                    //     end
+                    //     STOP: begin
+                    //         num0 = (reSTART)? 4'd1 : 4'd0;
+                    //         num1 = 4'd0;
+                    //         num2 = 4'd0;
+                    //         case(storeState)
+                    //             IDLE: num3 = 4'd12;
+                    //             STRAIGHT: num3 = 4'd1;
+                    //             LEFT: num3 = 4'd13;
+                    //             RIGHT: num3 = 4'd15;
+                    //             BACK: num3 = 4'd11;
+                    //             default : num3 = 4'd0;
+                    //         endcase
+                    //     end
+                    //     FINISH:begin
+                    //         num0 = 4'd10;
+                    //         num1 = 4'd10;
+                    //         num2 = 4'd10;
+                    //         num3 = 4'd10;
+                    //     end
+                    //     default : begin
+                    //         num0 = 4'd0;
+                    //         num1 = 4'd0;
+                    //         num2 = 4'd0;
+                    //         num3 = 4'd0;
+                    //     end
+                    // endcase
             end
-            // always @(*)begin
-            //         case(state)
-            //             IDLE: begin
-            //                 num0 = 4'd1;
-            //                 num1 = 4'd12;
-            //                 num2 = 4'd13;
-            //                 num3 = 4'd14;
-            //             end
-            //             START: begin
-            //                 num0 = 4'd11;
-            //                 num1 = 4'd11;
-            //                 num2 = 4'd11;
-            //                 num3 = 4'd11;
-            //             end
-            //             COUNT: begin
-            //                 num0 = 4'd11;
-            //                 num1 = 4'd11;
-            //                 num2 = 4'd11;
-            //                 num3 = 3 - countDetail;
-            //             end
-            //             STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin //checkPoint2
-            //                 num0 = 4'd10;
-            //                 num1 = 4'd2;
-            //                 num2 = 4'd11;
-            //                 num3 = (checkPoint2) ? 4'd1:4'd0;
-            //             end
-            //             CHOOSE: begin
-            //                 num0 = 4'd10;
-            //                 num1 = 4'd1;
-            //                 num2 = 4'd11;
-            //                 num3 = (checkPoint1) ? 4'd1:4'd0;
-            //             end
-            //             LEFT: begin
-            //                 num0 = 4'd10;
-            //                 num1 = 4'd3;
-            //                 num2 = 4'd11;
-            //                 num3 = (checkPoint3) ? 4'd1:4'd0;
-            //             end
-            //             RIGHT: begin
-            //                 num0 = 4'd4;
-            //                 num1 = (checkPoint4) ? 4'd1:4'd0;
-            //                 num2 = 4'd11;
-            //                 num3 = (counterRight == 2'd0)? 4'd0: (counterRight == 2'd1) ? 4'd1:4'd2;
-            //             end
-            //             BACK: begin
-            //                 num0 = 4'd11; //-
-            //                 num1 = 4'd0;
-            //                 num2 = 4'd0;
-            //                 case(storeState)
-            //                     IDLE: num3 = 4'd12;
-            //                     STRAIGHT: num3 = 4'd1;
-            //                     LEFT: num3 = 4'd13;
-            //                     RIGHT: num3 = 4'd15;
-            //                     BACK: num3 = 4'd11; //-
-            //                     default : num3 = 4'd0;
-            //                 endcase
-            //             end
-            //             STOP: begin
-            //                 num0 = (reSTART)? 4'd1 : 4'd0;
-            //                 num1 = 4'd0;
-            //                 num2 = 4'd0;
-            //                 case(storeState)
-            //                     IDLE: num3 = 4'd12;
-            //                     STRAIGHT: num3 = 4'd1;
-            //                     LEFT: num3 = 4'd13;
-            //                     RIGHT: num3 = 4'd15;
-            //                     BACK: num3 = 4'd11;
-            //                     default : num3 = 4'd0;
-            //                 endcase
-            //             end
-            //             FINISH:begin
-            //                 num0 = 4'd10;
-            //                 num1 = 4'd10;
-            //                 num2 = 4'd10;
-            //                 num3 = 4'd10;
-            //             end
-            //             default : begin
-            //                 num0 = 4'd0;
-            //                 num1 = 4'd0;
-            //                 num2 = 4'd0;
-            //                 num3 = 4'd0;
-            //             end
-            //         endcase
-            //     end
->>>>>>> stack_new
             always @(posedge clk_update) begin
                 if (state != FINISH) begin
                     shift_reg[0] <= 4'd0;
