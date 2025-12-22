@@ -82,7 +82,8 @@ module mainModule(
             reg [1:0] mem [0:LAST_MEM_INDEX];
             reg pushDecision, pushDecision_s;
             reg popDecision, popDecision_s;
-            reg [1:0] addVal;
+            reg [1:0]addVal;
+            wire [1:0]LSRSignal;
         // Joystick signal
             wire [1:0] joyStickDir;
             wire joyStickButton;
@@ -126,6 +127,8 @@ module mainModule(
             reg [4:0]led_left;
   
   // Assign Block
+    // Stack Update Manual
+        assign LSRSignal = (chosenState == STRAIGHT) ? 2'd0 : (chosenState == LEFT) ? 2'd1 : (chosenState == RIGHT) ? 2'd2 : 2'd3;
     // Distence
         assign mode = (distance < 2) ? 1 : 0;
     // Counter Enable signal
@@ -307,7 +310,7 @@ module mainModule(
                                 end
                                 else nextState = CHOOSE_DIR_STEP1;
                             end
-                            CHOOSE_DIR_STEP2:begin
+                            CHOOSE_DIR_STEP2:begin //choose
                                 if(detect != 3'b111)nextState = CHOOSE_DIR_STEP3;
                                 else nextState = CHOOSE_DIR_STEP2;
                             end
@@ -465,20 +468,45 @@ module mainModule(
                             else transitionState = LEFT;
                         end
                         RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
-                        BACK: begin
-                            // pop value assign next transition
-                            if(detect == TURN_ROAD111 && mem[index] == DEC_STRAIGHT)begin
-                                transitionState = LEFT;
-                                pushDecision = 1;
-                                popDecision = 1;
-                                addVal = DEC_LEFT;
+                        BACK: begin                            
+                            if(detect == 3'b111)begin
+                                if(sw[1])begin
+                                    transitionState = CHOOSE_DIR_STEP1;
+                                    pushDecision = 1;
+                                    popDecision = 1;
+                                    addVal = mem[index]; // update signal
+                                end else begin
+                                    if(mem[index] == DEC_STRAIGHT)begin
+                                        transitionState = LEFT;
+                                        pushDecision = 1;
+                                        popDecision = 1;
+                                        addVal = DEC_LEFT; 
+                                    end
+                                    else if(mem[index] == DEC_LEFT)begin
+                                        transitionState = RIGHT;
+                                        pushDecision = 1;
+                                        popDecision = 1;
+                                        addVal = DEC_RIGHT;
+                                    end else transitionState = BACK;
+                                end
                             end
-                            else if(detect == TURN_ROAD111 && mem[index] == DEC_LEFT)begin
-                                transitionState = RIGHT;
-                                pushDecision = 1;
-                                popDecision = 1;
-                                addVal = DEC_RIGHT;
-                            end else transitionState = BACK;
+                                // pop value assign next transition
+                                // if(detect == TURN_ROAD111 && mem[index] == DEC_STRAIGHT)begin
+                                //     if(sw[1]) transitionState = CHOOSE_DIR_STEP1;
+                                //     else  transitionState = LEFT;
+
+                                //     pushDecision = 1;
+                                //     popDecision = 1;
+                                //     addVal = DEC_LEFT;
+                                // end
+                                // else if(detect == TURN_ROAD111 && mem[index] == DEC_LEFT)begin
+                                //     if(sw[1]) transitionState = CHOOSE_DIR_STEP1;
+                                //     else  transitionState = RIGHT;
+
+                                //     pushDecision = 1;
+                                //     popDecision = 1;
+                                //     addVal = DEC_RIGHT;
+                                // end else transitionState = BACK;
                         end
                     endcase
                 end
@@ -497,11 +525,11 @@ module mainModule(
                         pushDecision_s <= pushDecision;
                         popDecision_s <= popDecision;
                         if(!pushDecision_s && pushDecision && !popDecision_s && popDecision)begin
-                            mem[index] <= addVal;
+                            mem[index] <= (sw[1])? (addVal + LSRSignal)%3 : addVal;
                         end
                         else if(!pushDecision_s && pushDecision)begin
                             if(index < MEM_DEPTH - 1)begin
-                                mem[index + 1] <= addVal;
+                                mem[index + 1] <= (sw[1])? (addVal + LSRSignal)%3 : addVal;
                                 index <= index + 1;
                             end
                         end
