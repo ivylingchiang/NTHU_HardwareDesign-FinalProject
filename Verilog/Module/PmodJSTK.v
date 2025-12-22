@@ -46,8 +46,8 @@ module PmodJSTK_TOP(
 			
 			//搖桿在左側，下到上六個腳分別是SS,MOSI,MISO,SCLK,GND,VCC
 			localparam CHOOSE_STRAIGHT = 2'b00;
-			localparam CHOOSE_LEFT = 2'b01;
-			localparam CHOOSE_RIGHT = 2'b11;
+			localparam CHOOSE_LEFT = 2'b11;
+			localparam CHOOSE_RIGHT = 2'b01;
 			localparam CHOOSE_BACK = 2'b10;
 
 			reg [1:0]curPos;
@@ -67,10 +67,10 @@ module PmodJSTK_TOP(
 					curPos <= 2'b00;
 				end
 				else begin
-					if(xAxis >= 550 && yAxis >= 320 && yAxis <= 720)curPos <= CHOOSE_LEFT;
-					else if(xAxis <= 450 && yAxis >= 320 && yAxis <= 720)curPos <= CHOOSE_RIGHT;
-					else if(yAxis < 320)curPos <= CHOOSE_STRAIGHT;
-					else if(yAxis > 720)curPos <= CHOOSE_BACK;
+					if(xAxis >= 550 && yAxis >= 320 && yAxis <= 720)curPos <= CHOOSE_STRAIGHT;
+					else if(xAxis <= 450 && yAxis >= 320 && yAxis <= 720)curPos <= CHOOSE_BACK;
+					else if(yAxis < 320)curPos <= CHOOSE_LEFT;
+					else if(yAxis > 720)curPos <= CHOOSE_RIGHT;
 				end
 			end
 			always@(*)begin
