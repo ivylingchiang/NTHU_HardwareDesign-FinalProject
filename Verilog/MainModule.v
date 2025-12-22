@@ -505,10 +505,13 @@ module mainModule(
                     end
                 // AUTO + Manual
                     always @(*)begin
+                        pushDecision2 = 0;
+                        popDecision2 = 0;
+                        pushDecision = 0;
+                        popDecision = 0;
+                        storeDir = 0;
+                        addVal = 0;
                         if(sw[1])begin // Manual
-                            pushDecision2 = 0;
-                            popDecision2 = 0;
-                            storeDir = 0;
                             case(state)
                                 STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
                                     if(detect == TURN_ROAD111 && checkPoint2)begin
@@ -534,9 +537,6 @@ module mainModule(
                                 end
                             endcase
                         end else begin // AUTO
-                            pushDecision = 0;
-                            popDecision = 0;
-                            addVal = 0;
                             case(state)
                                 STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
                                     if(detect == TURN_ROAD111 && checkPoint2)begin
