@@ -378,7 +378,7 @@ module mainModule(
                                     // Transform state(2)
                                         TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
                                         TURN_ROAD111: begin
-                                            if(checkPoint4 && (sw[1] || DoneRight))begin
+                                            if(checkPoint4 && DoneRight)begin
                                                 // transitionState = STRAIGHT;
                                                 nextState = STOP;
                                             end else nextState = RIGHT;
@@ -394,10 +394,9 @@ module mainModule(
                                     case(detect)
                                     // ERROR STATE(0)                    
                                     // Transform state(2)
-                                        TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
+                                        TURN_ROAD101: nextState = CHOOSE_DIR_STEP1;
                                         TURN_ROAD111: begin
-                                            if(checkPoint4 && (sw[1] || DoneRight))begin
-                                                // transitionState = STRAIGHT;
+                                            if(checkPoint4)begin
                                                 nextState = STOP;
                                             end else nextState = RIGHT;
                                         end
