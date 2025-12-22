@@ -125,6 +125,7 @@ module mainModule(
             reg [5:0] mem_idx;          
             reg [2:0] valid_cnt; 
             reg done;
+            wire [1:0]switchMode;
         // Led signal
             reg [5:0]led_middle;
             reg [2:0]led_right;
@@ -141,6 +142,7 @@ module mainModule(
         assign LED = (state == FINISH) ?  {16'b1111_1111_1111_1111}:{led_left,1'd0, led_middle ,1'd0,led_right};
         assign nums =  (state == FINISH) ? display : {num0, num1, num2, num3};
         assign display ={shift_reg[3],shift_reg[2],shift_reg[1],shift_reg[0]};   
+        assign switchMode = (!sw[1])? 2'd0 : 2'd1;
     // Joystick
         assign pressButton = (!joyStickButton_s && joyStickButton) ;
 
@@ -659,96 +661,123 @@ module mainModule(
     // IO
         // SevenSegment Display
             always @(*)begin
-                // num0 = 4'd0;
-                // num1 = 4'd0;
-                // num2 = 4'd0;
-                // num3 = {2'b00,joyStickDir};
-                case(state)
-                    IDLE: begin
-                        // num0 = 4'd1;
-                        // num1 = 4'd12;
-                        // num2 = 4'd13;
-                        // num3 = 4'd14;
-                        num0 = 4'd0;
-                        num1 = 4'd0;
-                        num2 = 4'd0;
-                        num3 = {2'b00,joyStickDir};
-                    end
-                    START: begin
-                        num0 = 4'd11;
-                        num1 = 4'd11;
-                        num2 = 4'd11;
-                        num3 = 4'd11;
-                    end
-                    COUNT: begin
-                        num0 = 4'd11;
-                        num1 = 4'd11;
-                        num2 = 4'd11;
-                        num3 = 3 - countDetail;
-                    end
-                    STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin //checkPoint2
-                        num0 = 4'd10;
-                        num1 = 4'd2;
-                        num2 = 4'd11;
-                        num3 = (checkPoint2) ? 4'd1:4'd0;
-                    end
-                    CHOOSE: begin
-                        num0 = 4'd10;
-                        num1 = 4'd1;
-                        num2 = 4'd11;
-                        num3 = (checkPoint1) ? 4'd1:4'd0;
-                    end
-                    CHOOSE_DIR_STEP1,CHOOSE_DIR_STEP2,CHOOSE_DIR_STEP3: begin
-                        num0 = 4'd0;
-                        num1 = 4'd0;
-                        num2 = 4'd0;
-                        num3 = {2'b00,joyStickDir};
-                    end
-                    LEFT: begin
-                        num0 = 4'd10;
-                        num1 = 4'd3;
-                        num2 = 4'd11;
-                        num3 = (checkPoint3) ? 4'd1:4'd0;
-                    end
-                    RIGHT: begin
-                        num0 = 4'd4;
-                        num1 = (checkPoint4) ? 4'd1:4'd0;
-                        num2 = 4'd11;
-                        num3 = (counterRight == 2'd0)? 4'd0: (counterRight == 2'd1) ? 4'd1:4'd2;
-                    end
-                    BACK: begin
-                        num0 = 4'd11; //-
-                        num1 = 4'd0;
-                        num2 = 4'd0;
-                        case(storeState)
-                            IDLE: num3 = 4'd12;
-                            STRAIGHT: num3 = 4'd1;
-                            LEFT: num3 = 4'd13;
-                            RIGHT: num3 = 4'd15;
-                            BACK: num3 = 4'd11; //-
-                            default : num3 = 4'd0;
-                        endcase
-                    end
-                    STOP: begin
-                        num0 = (reSTART)? 4'd1 : 4'd0;
-                        num1 = 4'd0;
-                        num2 = 4'd0;
-                        case(storeState)
-                            IDLE: num3 = 4'd12;
-                            STRAIGHT: num3 = 4'd1;
-                            LEFT: num3 = 4'd13;
-                            RIGHT: num3 = 4'd15;
-                            BACK: num3 = 4'd11;
-                            default : num3 = 4'd0;
-                        endcase
-                    end
-                    default : begin
-                        num0 = 4'd0;
-                        num1 = 4'd0;
-                        num2 = 4'd0;
-                        num3 = 4'd0;
-                    end
-                endcase
+                if(switchMode == 2'd0)begin
+                    case(state)
+                        IDLE: begin //IDLE
+                            num0 = 4'd1;
+                            num1 = 4'd12;
+                            num2 = 4'd13;
+                            num3 = 4'd14;
+                        end
+                        START: begin
+                            num0 = 4'd11;
+                            num1 = 4'd11;
+                            num2 = 4'd11;
+                            num3 = 4'd11;
+                        end
+                        COUNT: begin
+                            num0 = 4'd11;
+                            num1 = 4'd11;
+                            num2 = 4'd11;
+                            num3 = 3 - countDetail;
+                        end
+                        STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: begin // S
+                            num0 = 4'd10;
+                            num1 = 4'd2;
+                            num2 = 4'd11;
+                            num3 = (checkPoint2) ? 4'd1:4'd0;
+                        end
+                        CHOOSE: begin
+                            num0 = 4'd10;
+                            num1 = 4'd1;
+                            num2 = 4'd11;
+                            num3 = (checkPoint1) ? 4'd1:4'd0;
+                        end
+                        CHOOSE_DIR_STEP1,CHOOSE_DIR_STEP2,CHOOSE_DIR_STEP3: begin
+                            num0 = 4'd10;
+                            num1 = 4'd0;
+                            num2 = 4'd0;
+                            num3 = {2'b00,joyStickDir};
+                        end
+                        LEFT: begin
+                            num0 = 4'd10;
+                            num1 = 4'd3;
+                            num2 = 4'd11;
+                            num3 = (checkPoint3) ? 4'd1:4'd0;
+                        end
+                        RIGHT: begin
+                            num0 = 4'd4;
+                            num1 = (checkPoint4) ? 4'd1:4'd0;
+                            num2 = 4'd11;
+                            num3 = (counterRight == 2'd0)? 4'd0: (counterRight == 2'd1) ? 4'd1:4'd2;
+                        end
+                        BACK: begin
+                            num0 = 4'd11; //-
+                            num1 = 4'd0;
+                            num2 = 4'd0;
+                            case(storeState)
+                                IDLE: num3 = 4'd12;
+                                STRAIGHT: num3 = 4'd1;
+                                LEFT: num3 = 4'd13;
+                                RIGHT: num3 = 4'd15;
+                                BACK: num3 = 4'd11; //-
+                                default : num3 = 4'd0;
+                            endcase
+                        end
+                        STOP: begin
+                            num0 = (reSTART)? 4'd1 : 4'd0;
+                            num1 = 4'd0;
+                            num2 = 4'd0;
+                            case(storeState)
+                                IDLE: num3 = 4'd12;
+                                STRAIGHT: num3 = 4'd1;
+                                LEFT: num3 = 4'd13;
+                                RIGHT: num3 = 4'd15;
+                                BACK: num3 = 4'd11;
+                                default : num3 = 4'd0;
+                            endcase
+                        end
+                        default : begin
+                            num0 = 4'd0;
+                            num1 = 4'd0;
+                            num2 = 4'd0;
+                            num3 = 4'd0;
+                        end
+                    endcase
+                end else begin
+                    case(state)
+                        IDLE: begin //IDLE
+                            num0 = 4'd1;
+                            num1 = 4'd12;
+                            num2 = 4'd13;
+                            num3 = 4'd14;
+                        end
+                        START: begin
+                            num0 = 4'd11;
+                            num1 = 4'd11;
+                            num2 = 4'd11;
+                            num3 = 4'd11;
+                        end
+                        COUNT: begin
+                            num0 = 4'd11;
+                            num1 = 4'd11;
+                            num2 = 4'd11;
+                            num3 = 3 - countDetail;
+                        end
+                        CHOOSE_DIR_STEP1,CHOOSE_DIR_STEP2,CHOOSE_DIR_STEP3: begin
+                            num0 = 4'd10;
+                            num1 = 4'd0;
+                            num2 = 4'd0;
+                            num3 = {2'b00,joyStickDir};
+                        end
+                        default : begin
+                            num0 = 4'd15;
+                            num1 = 4'd15;
+                            num2 = 4'd15;
+                            num3 = 4'd15;
+                        end
+                    endcase
+                end
             end
             always @(posedge clk_update) begin
                 if (state != FINISH) begin
@@ -762,19 +791,10 @@ module mainModule(
                 end
                 else if (!done) begin
                     if(sw[1])begin
-                        shift_reg[3] <= shift_reg[2];
-                        shift_reg[2] <= shift_reg[1];
-                        shift_reg[1] <= shift_reg[0];
-                        if (memManual[mem_idx] != 2'd0) begin
-                            shift_reg[0] <={2'd0, memManual[mem_idx]};
-                        end else begin
-                            shift_reg[0] <= 4'd0;
-                            valid_cnt <= valid_cnt + 1;
-                        end
-                        mem_idx <= mem_idx + 1;
-                        if (mem_idx == LAST_MEM_INDEX || valid_cnt >= 4) begin
-                            done <= 1'b1;
-                        end
+                        shift_reg[0] <= 4'd15;
+                        shift_reg[1] <= 4'd14;
+                        shift_reg[2] <= 4'd9;
+                        shift_reg[3] <= 4'd12;
                     end else begin
                         shift_reg[3] <= shift_reg[2];
                         shift_reg[2] <= shift_reg[1];
@@ -791,10 +811,17 @@ module mainModule(
                         end
                     end
                 end else begin
-                    shift_reg[0] <= {2'd0, memManual[2]};
-                    shift_reg[1] <= {2'd0, memManual[1]};
+                    if(sw[1])begin
+                        shift_reg[0] <= 4'd15;
+                        shift_reg[1] <= 4'd14;
+                        shift_reg[2] <= 4'd9;
+                        shift_reg[3] <= 4'd12;
+                    end else begin
+                    shift_reg[0] <= 4'd0;
+                    shift_reg[1] <= 4'd0;
                     shift_reg[2] <= 4'd0;
                     shift_reg[3] <= 4'd0;
+                    end
                 end
             end
         // LED Display
@@ -849,7 +876,7 @@ module mainModule(
     clockDriver1 cD1( .clk(clk), .countEnable(countSTOP), .flash(reSTART));
     clockDriver2 cD2( .clk(clk), .countEnable(backEn), .flash(flashBack));
     clock_divider cD3( .clk(clk), .clk_div(clk_update));
-    SevenSegment S( .display(DISPLAY), .digit(DIGIT), .nums(nums), .rst(rst), .clk(clk));
+    SevenSegment S( .display(DISPLAY), .digit(DIGIT), .nums(nums), .rst(rst), .clk(clk), .switchMode(switchMode));
     motor A( .clk(clk), .rst(rst), .mode(state), .lastMode(lastState), .pwm({left_pwm, right_pwm}), .l_IN({IN1, IN2}), .r_IN({IN3, IN4}));
     sonic_top B( .clk(clk), .rst(rst), .Echo(echo), .Trig(trig), .distance(distance));
     tracker_sensor C( .clk(clk), .reset(rst), .left_track(left_track), .mid_track(mid_track), .right_track(right_track), .detect_road(detect));
