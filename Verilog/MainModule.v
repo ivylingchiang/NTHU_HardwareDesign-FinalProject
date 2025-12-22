@@ -781,8 +781,8 @@ module mainModule(
                         end
                     end
                 end else begin
-                    shift_reg[0] <= 4'd0;
-                    shift_reg[1] <= 4'd0;
+                    shift_reg[0] <= {2'd0, memManual[2]};
+                    shift_reg[1] <= {2'd0, memManual[1]};
                     shift_reg[2] <= 4'd0;
                     shift_reg[3] <= 4'd0;
                 end
