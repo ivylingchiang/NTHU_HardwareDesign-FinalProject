@@ -154,7 +154,7 @@ module mainModule(
             // count choose
                 always @(posedge clk)begin
                     if(rst)countChecken <= 0;
-                    else if(state == CHOOSE_DIR_STEP1 && pressButton) countChecken <= 1;
+                    else if(state == CHOOSE_DIR_STEP1 && joyStickButton) countChecken <= 1;
                     else if(state != CHOOSE_DIR_STEP1) countChecken <= 0;
                 end
             // #turn right
@@ -316,19 +316,17 @@ module mainModule(
                                 endcase
                             end
                             CHOOSE_DIR_STEP1:begin
-                                if(pressButton)begin
                                     if(countCheck)begin
-                                    case(joyStickDir)
-                                    2'b00: begin
-                                        nextState = STRAIGHT;
-                                    end
-                                    // 2'b01:chosenState = RIGHT;
-                                    // 2'b11:chosenState = LEFT;
-                                    default:nextState = (sw[1])? CHOOSE_DIR_STEP3 : CHOOSE_DIR_STEP2;
-                                    endcase
-                                    end else nextState = CHOOSE_DIR_STEP1;
-                                end
-                                else nextState = CHOOSE_DIR_STEP1;
+                                        case(joyStickDir)
+                                        2'b00: begin
+                                            nextState = STRAIGHT;
+                                        end
+                                        // 2'b01:chosenState = RIGHT;
+                                        // 2'b11:chosenState = LEFT;
+                                        default:nextState = (sw[1])? CHOOSE_DIR_STEP3 : CHOOSE_DIR_STEP2;
+                                        endcase
+                                    end 
+                                    else nextState = CHOOSE_DIR_STEP1;
                             end
                             CHOOSE_DIR_STEP2:begin //choose
                                 

@@ -1,4 +1,4 @@
-module clockDriver1(
+module clockDriver3(
   input wire clk,
   input wire countEnable,
   output reg flash
