@@ -74,7 +74,7 @@ module mainModule(
             // cp3: from stop(111) to left(111)
             // cp4: from stop(111) to right(111)
             // cp5: from choose(101) to left(101)
-            reg checkPoint1,checkPoint2,checkPoint3,checkPoint4, checkPoint5;
+            reg checkPoint1,checkPoint2,checkPoint3,checkPoint4, checkPoint5,checkPoint6;
         // Stack singal
             reg pop;
             reg [4:0] index;
@@ -191,6 +191,7 @@ module mainModule(
                     checkPoint3 <= 0;
                     checkPoint4 <= 0;
                     checkPoint5 <= 0;
+                    checkPoint6 <= 0;
                     storeState <= LEFT; 
                 end else begin
                     storeState <= transitionState;
@@ -212,6 +213,9 @@ module mainModule(
                     // choose(101) -> left(101)
                     if(state == LEFT && detect != 3'b101) checkPoint5 <= 1;
                     else if(state != LEFT) checkPoint5<=0;
+
+                    if(state == RIGHT && detect != 3'b101) checkPoint6 <= 1;
+                    else if(state!= RIGHT) checkPoint6 <=0;
                 end
             end
         // FSM
@@ -396,7 +400,11 @@ module mainModule(
                                     case(detect)
                                     // ERROR STATE(0)                    
                                     // Transform state(2)
-                                        TURN_ROAD101: nextState = CHOOSE_DIR_STEP1;
+                                        TURN_ROAD101: begin
+                                            if(checkPoint6)begin
+                                                nextState = STOP;
+                                            end else nextState = RIGHT;
+                                        end
                                         TURN_ROAD111: begin
                                             if(checkPoint4)begin
                                                 nextState = STOP;
