@@ -78,12 +78,16 @@ module mainModule(
         // Stack singal
             reg pop;
             reg [4:0] index;
+            reg [4:0] indexM;
             integer rst_index;
             reg [1:0] mem [0:LAST_MEM_INDEX];
+            reg [1:0] memManual [0:LAST_MEM_INDEX];
             reg pushDecision, pushDecision_s;
             reg popDecision, popDecision_s;
+            reg pushDecision2, pushDecision_s2;
+            reg popDecision2, popDecision_s2;
             reg [1:0]addVal;
-            wire [1:0]LSRSignal;
+            reg [1:0]storeDir;
         // Joystick signal
             wire [1:0] joyStickDir;
             wire joyStickButton;
@@ -127,8 +131,6 @@ module mainModule(
             reg [4:0]led_left;
   
   // Assign Block
-    // Stack Update Manual
-        assign LSRSignal = (chosenState == STRAIGHT) ? 2'd0 : (chosenState == LEFT) ? 2'd1 : (chosenState == RIGHT) ? 2'd2 : 2'd3;
     // Distence
         assign mode = (distance < 2) ? 1 : 0;
     // Counter Enable signal
@@ -245,7 +247,6 @@ module mainModule(
                 end
             // "NEXTSTATE" Update: Combinational
                 always @(*)begin
-                    pop = 0;
                     if(mode) nextState = FINISH;
                     else begin
                         case(state)
@@ -302,7 +303,9 @@ module mainModule(
                             CHOOSE_DIR_STEP1:begin
                                 if(pressButton)begin
                                     case(joyStickDir)
-                                    2'b00:nextState = STRAIGHT;
+                                    2'b00: begin
+                                        nextState = STRAIGHT;
+                                    end
                                     // 2'b01:chosenState = RIGHT;
                                     // 2'b11:chosenState = LEFT;
                                     default:nextState = CHOOSE_DIR_STEP2;
@@ -369,23 +372,43 @@ module mainModule(
                             end
                             
                             RIGHT:begin
-                                case(detect)
-                                // ERROR STATE(0)                    
-                                // Transform state(2)
-                                    TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
-                                    TURN_ROAD111: begin
-                                        if(checkPoint4 && (sw[1] || DoneRight))begin
-                                            // transitionState = STRAIGHT;
-                                            nextState = STOP;
-                                        end else nextState = RIGHT;
-                                    end
-                                // Nothing Change(6)
-                                    RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = RIGHT;
-                                    LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = RIGHT;
-                                    STRAIGHT_ROAD: nextState = RIGHT;
-                                    ERROR_ROAD: nextState = RIGHT;
-                                    default :  nextState = RIGHT;
-                                endcase
+                                if(!sw[1])begin
+                                    case(detect)
+                                    // ERROR STATE(0)                    
+                                    // Transform state(2)
+                                        TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
+                                        TURN_ROAD111: begin
+                                            if(checkPoint4 && (sw[1] || DoneRight))begin
+                                                // transitionState = STRAIGHT;
+                                                nextState = STOP;
+                                            end else nextState = RIGHT;
+                                        end
+                                    // Nothing Change(6)
+                                        RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = RIGHT;
+                                        LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = RIGHT;
+                                        STRAIGHT_ROAD: nextState = RIGHT;
+                                        ERROR_ROAD: nextState = RIGHT;
+                                        default :  nextState = RIGHT;
+                                    endcase
+                                end else begin
+                                    case(detect)
+                                    // ERROR STATE(0)                    
+                                    // Transform state(2)
+                                        TURN_ROAD101: nextState = (DoneRight) ? ERROR : RIGHT;
+                                        TURN_ROAD111: begin
+                                            if(checkPoint4 && (sw[1] || DoneRight))begin
+                                                // transitionState = STRAIGHT;
+                                                nextState = STOP;
+                                            end else nextState = RIGHT;
+                                        end
+                                    // Nothing Change(6)
+                                        RIGHT_ROAD, RIGHT_LITTLE_ROAD:nextState = RIGHT;
+                                        LEFT_ROAD, LEFT_LITTLE_ROAD:nextState = RIGHT;
+                                        STRAIGHT_ROAD: nextState = RIGHT;
+                                        ERROR_ROAD: nextState = RIGHT;
+                                        default :  nextState = RIGHT;
+                                    endcase
+                                end
                             end
                             
                             LITTLE_RIGHT:begin//slightly fixing direction when going straight
@@ -435,82 +458,134 @@ module mainModule(
                     end
                 end
             // "TRANSITIONSTATE" && "POP" && "Push/Pop_Stack" Update: Combinational
-                always @(*)begin
-                    transitionState = storeState;
-                    pushDecision = 0;
-                    popDecision = 0;
-                    addVal = 0;
-                    case(state)
-                        STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
-                            transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
-                            if(detect == TURN_ROAD111 && checkPoint2)begin
-                                pushDecision = 1;
-                                addVal = DEC_STRAIGHT;
+                // TransitionState
+                    always @(*)begin
+                        transitionState = storeState;
+                        case(state)
+                            STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
+                                transitionState = (detect == ERROR_ROAD) ? BACK : STRAIGHT;
                             end
-                        end
-                        CHOOSE: begin
-                            if(detect == TURN_ROAD101)begin
-                                transitionState = LEFT;
-                                pushDecision = 1;
-                                popDecision = 1;
-                                addVal = DEC_LEFT;
+                            CHOOSE: begin
+                                if(sw[1]) transitionState = (detect == TURN_ROAD101) ? CHOOSE_DIR_STEP1 : CHOOSE;
+                                else transitionState = (detect == TURN_ROAD101) ? LEFT : CHOOSE;
                             end
-                            else transitionState = CHOOSE;
-                        end
-                        LEFT: begin
-                            if(detect == TURN_ROAD101)begin
-                                transitionState = RIGHT;
-                                pushDecision = 1;
-                                popDecision = 1;
-                                addVal = DEC_RIGHT;
-                            end
-                            else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
-                            else transitionState = LEFT;
-                        end
-                        RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
-                        BACK: begin                            
-                            if(detect == 3'b111)begin
-                                if(sw[1])begin
-                                    transitionState = CHOOSE_DIR_STEP1;
-                                    pushDecision = 1;
-                                    popDecision = 1;
-                                    addVal = mem[index]; // update signal
+                            LEFT: begin
+                                if(sw[1]) begin
+                                    if(detect == TURN_ROAD101) transitionState = CHOOSE_DIR_STEP1;
+                                    else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
+                                    else transitionState = LEFT;
                                 end else begin
-                                    if(mem[index] == DEC_STRAIGHT)begin
-                                        transitionState = LEFT;
-                                        pushDecision = 1;
-                                        popDecision = 1;
-                                        addVal = DEC_LEFT; 
-                                    end
-                                    else if(mem[index] == DEC_LEFT)begin
-                                        transitionState = RIGHT;
-                                        pushDecision = 1;
-                                        popDecision = 1;
-                                        addVal = DEC_RIGHT;
+                                    if(detect == TURN_ROAD101) transitionState = RIGHT;
+                                    else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
+                                    else transitionState = LEFT;
+                                end
+                            end
+                            RIGHT: begin
+                                if(sw[1]) begin
+                                    if(detect == TURN_ROAD101) transitionState = CHOOSE_DIR_STEP1;
+                                    else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
+                                    else transitionState = RIGHT;
+                                end
+                                else transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
+                            end
+                            BACK: begin  
+                                if(sw[1])begin
+                                    if(detect == 3'b111)begin
+                                        transitionState = CHOOSE_DIR_STEP1;
+                                    end else transitionState = BACK;
+                                end else begin
+                                    if(detect == 3'b111 && mem[index] == DEC_STRAIGHT)begin
+                                            transitionState = LEFT;
+                                    end else if(detect == 3'b111 && mem[index] == DEC_LEFT)begin
+                                            transitionState = RIGHT;    
                                     end else transitionState = BACK;
                                 end
                             end
-                                // pop value assign next transition
-                                // if(detect == TURN_ROAD111 && mem[index] == DEC_STRAIGHT)begin
-                                //     if(sw[1]) transitionState = CHOOSE_DIR_STEP1;
-                                //     else  transitionState = LEFT;
-
-                                //     pushDecision = 1;
-                                //     popDecision = 1;
-                                //     addVal = DEC_LEFT;
-                                // end
-                                // else if(detect == TURN_ROAD111 && mem[index] == DEC_LEFT)begin
-                                //     if(sw[1]) transitionState = CHOOSE_DIR_STEP1;
-                                //     else  transitionState = RIGHT;
-
-                                //     pushDecision = 1;
-                                //     popDecision = 1;
-                                //     addVal = DEC_RIGHT;
-                                // end else transitionState = BACK;
+                        endcase
+                    end
+                // AUTO + Manual
+                    always @(*)begin
+                        if(sw[1])begin // Manual
+                            pushDecision2 = 0;
+                            popDecision2 = 0;
+                            storeDir = 0;
+                            case(state)
+                                STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
+                                    if(detect == TURN_ROAD111 && checkPoint2)begin
+                                        pushDecision2 = 1;
+                                        popDecision2 = 1;
+                                        storeDir = memManual[indexM]; // 1
+                                    end
+                                end
+                                CHOOSE_DIR_STEP1: begin
+                                    if(joyStickDir == STRAIGHT) begin
+                                        storeDir = memManual[indexM];
+                                        pushDecision2 = 1;
+                                        popDecision2 = 1;
+                                    end
+                                end
+                                CHOOSE_DIR_STEP3: begin
+                                    pushDecision2 = 1;
+                                    popDecision2 = 1;
+                                    case (chosenState)
+                                        LEFT: storeDir = ( memManual[indexM] + 1 ) % 3;
+                                        RIGHT: storeDir = ( memManual[indexM] + 2 ) % 3;
+                                    endcase
+                                end
+                            endcase
+                        end else begin // AUTO
+                            pushDecision = 0;
+                            popDecision = 0;
+                            addVal = 0;
+                            case(state)
+                                STRAIGHT, LITTLE_LEFT,LITTLE_RIGHT: begin
+                                    if(detect == TURN_ROAD111 && checkPoint2)begin
+                                        pushDecision = 1;
+                                        addVal = DEC_STRAIGHT;
+                                    end
+                                end
+                                CHOOSE: begin
+                                    if(detect == TURN_ROAD101)begin
+                                        // transitionState = LEFT;
+                                        pushDecision = 1;
+                                        popDecision = 1;
+                                        addVal = DEC_LEFT;
+                                    end
+                                    // else transitionState = CHOOSE;
+                                end
+                                LEFT: begin
+                                    if(detect == TURN_ROAD101)begin
+                                        // transitionState = RIGHT;
+                                        pushDecision = 1;
+                                        popDecision = 1;
+                                        addVal = DEC_RIGHT;
+                                    end
+                                    // else if (detect == TURN_ROAD111) transitionState = STRAIGHT;
+                                    // else transitionState = LEFT;
+                                end
+                                // RIGHT: transitionState = (detect == TURN_ROAD111) ? STRAIGHT : RIGHT;
+                                BACK: begin                            
+                                    if(detect == 3'b111)begin
+                                        if(mem[index] == DEC_STRAIGHT)begin
+                                            // transitionState = LEFT;
+                                            pushDecision = 1;
+                                            popDecision = 1;
+                                            addVal = DEC_LEFT; 
+                                        end
+                                        else if(mem[index] == DEC_LEFT)begin
+                                            // transitionState = RIGHT;
+                                            pushDecision = 1;
+                                            popDecision = 1;
+                                            addVal = DEC_RIGHT;
+                                        // end else transitionState = BACK;
+                                        end
+                                    end
+                                end
+                            endcase
                         end
-                    endcase
-                end
+                    end
             // "TRANSITIONSTATE" && "POP" && "STACK" Update: Sequential
+                // AUTO
                 always@(posedge clk,posedge rst)begin
                     if(rst)begin
                         index <= 0;
@@ -525,11 +600,11 @@ module mainModule(
                         pushDecision_s <= pushDecision;
                         popDecision_s <= popDecision;
                         if(!pushDecision_s && pushDecision && !popDecision_s && popDecision)begin
-                            mem[index] <= (sw[1])? (addVal + LSRSignal)%3 : addVal;
+                            mem[index] <= addVal;
                         end
                         else if(!pushDecision_s && pushDecision)begin
                             if(index < MEM_DEPTH - 1)begin
-                                mem[index + 1] <= (sw[1])? (addVal + LSRSignal)%3 : addVal;
+                                mem[index + 1] <= addVal;
                                 index <= index + 1;
                             end
                         end
@@ -537,6 +612,36 @@ module mainModule(
                             if(index > 0)begin
                                 mem[index] <= 2'b00;
                                 index <= index - 1;
+                            end
+                        end
+                    end
+                end
+                //Manual
+                always@(posedge clk,posedge rst)begin
+                    if(rst)begin
+                        indexM <= 0;
+                        for(rst_index = 0; rst_index <= 49; rst_index = rst_index + 1)begin
+                            memManual[rst_index] <= 2'b00;
+                        end
+                        pushDecision_s2 <= 0;
+                        popDecision_s2 <= 0;
+                    end
+                    else begin
+                        pushDecision_s2 <= pushDecision2;
+                        popDecision_s2 <= popDecision2;
+                        if(!pushDecision_s2 && pushDecision2 && !popDecision_s && popDecision2)begin
+                            memManual[indexM] <= storeDir;
+                        end
+                        else if(!pushDecision_s2 && pushDecision2)begin
+                            if(indexM < MEM_DEPTH - 1)begin
+                                memManual[indexM + 1] <= storeDir;
+                                indexM <= indexM + 1;
+                            end
+                        end
+                        else if(!popDecision_s2 && popDecision2)begin
+                            if(indexM > 0)begin
+                                memManual[indexM] <= 2'b00;
+                                indexM <= indexM - 1;
                             end
                         end
                     end
@@ -647,18 +752,34 @@ module mainModule(
                     done <= 0;
                 end
                 else if (!done) begin
-                    shift_reg[3] <= shift_reg[2];
-                    shift_reg[2] <= shift_reg[1];
-                    shift_reg[1] <= shift_reg[0];
-                    if (mem[mem_idx] != 2'd0) begin
-                        shift_reg[0] <={2'd0, mem[mem_idx]};
+                    if(sw[1])begin
+                        shift_reg[3] <= shift_reg[2];
+                        shift_reg[2] <= shift_reg[1];
+                        shift_reg[1] <= shift_reg[0];
+                        if (memManual[mem_idx] != 2'd0) begin
+                            shift_reg[0] <={2'd0, memManual[mem_idx]};
+                        end else begin
+                            shift_reg[0] <= 4'd0;
+                            valid_cnt <= valid_cnt + 1;
+                        end
+                        mem_idx <= mem_idx + 1;
+                        if (mem_idx == LAST_MEM_INDEX || valid_cnt >= 4) begin
+                            done <= 1'b1;
+                        end
                     end else begin
-                        shift_reg[0] <= 4'd0;
-                        valid_cnt <= valid_cnt + 1;
-                    end
-                    mem_idx <= mem_idx + 1;
-                    if (mem_idx == LAST_MEM_INDEX || valid_cnt >= 4) begin
-                        done <= 1'b1;
+                        shift_reg[3] <= shift_reg[2];
+                        shift_reg[2] <= shift_reg[1];
+                        shift_reg[1] <= shift_reg[0];
+                        if (mem[mem_idx] != 2'd0) begin
+                            shift_reg[0] <={2'd0, mem[mem_idx]};
+                        end else begin
+                            shift_reg[0] <= 4'd0;
+                            valid_cnt <= valid_cnt + 1;
+                        end
+                        mem_idx <= mem_idx + 1;
+                        if (mem_idx == LAST_MEM_INDEX || valid_cnt >= 4) begin
+                            done <= 1'b1;
+                        end
                     end
                 end else begin
                     shift_reg[0] <= 4'd0;
