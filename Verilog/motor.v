@@ -66,13 +66,13 @@ module motor(
                     l_IN <= 2'b10; 
                 end
                 STRAIGHT: begin
-                    left_motor <= 10'd750;
+                    left_motor <= 10'd755;
                     right_motor <= 10'd730;
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 
                 end
                 CHOOSE: begin
-                    left_motor <= 10'd750;
+                    left_motor <= 10'd755;
                     right_motor <= 10'd750;
                     r_IN <= 2'b10;
                     l_IN <= 2'b10; 

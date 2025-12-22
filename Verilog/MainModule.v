@@ -100,12 +100,14 @@ module mainModule(
             wire countEnable;
             wire backEn; 
             wire countSTOP;
+            reg countChecken;
         // Counter Return
             wire flash;
             wire countFinish;
             wire [1:0]countDetail;
             wire reSTART;
             wire flashBack;
+            wire countCheck;
         // Main module counter
             // #turn right
             reg [1:0]counterRight;
@@ -149,6 +151,12 @@ module mainModule(
   // Circuit 
     // System
         // Sys.Counter Update
+            // count choose
+                always @(posedge clk)begin
+                    if(rst)countChecken <= 0;
+                    else if(state == CHOOSE_DIR_STEP1 && pressButton) countChecken <= 1;
+                    else if(state != CHOOSE_DIR_STEP1) countChecken <= 0;
+                end
             // #turn right
                 always @(posedge clk)begin
                     control_s <= control;
@@ -309,23 +317,26 @@ module mainModule(
                             end
                             CHOOSE_DIR_STEP1:begin
                                 if(pressButton)begin
+                                    if(countCheck)begin
                                     case(joyStickDir)
                                     2'b00: begin
                                         nextState = STRAIGHT;
                                     end
                                     // 2'b01:chosenState = RIGHT;
                                     // 2'b11:chosenState = LEFT;
-                                    default:nextState = CHOOSE_DIR_STEP2;
+                                    default:nextState = (sw[1])? CHOOSE_DIR_STEP3 : CHOOSE_DIR_STEP2;
                                     endcase
+                                    end else nextState = CHOOSE_DIR_STEP1;
                                 end
                                 else nextState = CHOOSE_DIR_STEP1;
                             end
                             CHOOSE_DIR_STEP2:begin //choose
-                                if(detect != 3'b111)nextState = CHOOSE_DIR_STEP3;
+                                
+                                if(detect != 3'b111 && detect != 3'b101)nextState = CHOOSE_DIR_STEP3;
                                 else nextState = CHOOSE_DIR_STEP2;
                             end
                             CHOOSE_DIR_STEP3:begin
-                                nextState = chosenState;
+                                nextState =  chosenState;
                             end
                         
                             
@@ -790,10 +801,10 @@ module mainModule(
                 end
                 else if (!done) begin
                     if(sw[1])begin
-                        shift_reg[0] <= 4'd15;
-                        shift_reg[1] <= 4'd14;
-                        shift_reg[2] <= 4'd9;
-                        shift_reg[3] <= 4'd12;
+                        shift_reg[0] <= 4'd12;
+                        shift_reg[1] <= 4'd9;
+                        shift_reg[2] <= 4'd14;
+                        shift_reg[3] <= 4'd15;
                     end else begin
                         shift_reg[3] <= shift_reg[2];
                         shift_reg[2] <= shift_reg[1];
@@ -811,10 +822,10 @@ module mainModule(
                     end
                 end else begin
                     if(sw[1])begin
-                        shift_reg[0] <= 4'd15;
-                        shift_reg[1] <= 4'd14;
-                        shift_reg[2] <= 4'd9;
-                        shift_reg[3] <= 4'd12;
+                        shift_reg[0] <= 4'd12;
+                        shift_reg[1] <= 4'd9;
+                        shift_reg[2] <= 4'd14;
+                        shift_reg[3] <= 4'd15;
                     end else begin
                     shift_reg[0] <= 4'd0;
                     shift_reg[1] <= 4'd0;
@@ -872,9 +883,10 @@ module mainModule(
     debounce d0( .pb_debounced(rst_d), .clk(clk), .pb(rst));
     onepulse o0( .signal(rst_d), .clk(clk), .op(rst_op));
     clockDriver cD( .clk(clk), .countEnable(countEnable), .countFinish(countFinish), .flash(flash), .countDetail(countDetail));
-    clockDriver1 cD1( .clk(clk), .countEnable(countSTOP), .flash(reSTART));
+    clockDriver1 cD4( .clk(clk), .countEnable(countSTOP), .flash(reSTART));
+    clockDriver3 cD3( .clk(clk), .countEnable(countChecken), .flash(countCheck));
     clockDriver2 cD2( .clk(clk), .countEnable(backEn), .flash(flashBack));
-    clock_divider cD3( .clk(clk), .clk_div(clk_update));
+    clock_divider cD5( .clk(clk), .clk_div(clk_update));
     SevenSegment S( .display(DISPLAY), .digit(DIGIT), .nums(nums), .rst(rst), .clk(clk), .switchMode(switchMode));
     motor A( .clk(clk), .rst(rst), .mode(state), .lastMode(lastState), .pwm({left_pwm, right_pwm}), .l_IN({IN1, IN2}), .r_IN({IN3, IN4}));
     sonic_top B( .clk(clk), .rst(rst), .Echo(echo), .Trig(trig), .distance(distance));
