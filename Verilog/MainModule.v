@@ -226,8 +226,10 @@ module mainModule(
                         if(state == CHOOSE_DIR_STEP1)begin
                             if(pressButton)begin
                                 case(joyStickDir)
-                                2'b01:chosenState <= RIGHT;
-                                2'b11:chosenState <= LEFT;
+                                2'b00: chosenState<= LEFT;
+                                2'b01:chosenState <= STRAIGHT; 
+                                2'b10: chosenState <= RIGHT;
+                                // 2'b11:chosenState <= LEFT;
                                 default:chosenState <= STRAIGHT;
                                 endcase
                             end
