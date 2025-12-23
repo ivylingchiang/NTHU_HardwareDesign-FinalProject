@@ -70,10 +70,11 @@ module mainModule(
             wire [2:0]detect;
         // Checkpoint setting
             // cp1: from straight(111) to choose(111)
-            // cp2: from left(111) to straight(111)
+            // cp2: from left(111) to straight(111) && [straight(111) to choose(111)] first time
             // cp3: from stop(111) to left(111)
             // cp4: from stop(111) to right(111)
             // cp5: from choose(101) to left(101)
+            // cp6: from choose(101) to right(101) 
             reg checkPoint1,checkPoint2,checkPoint3,checkPoint4, checkPoint5,checkPoint6;
         // Stack singal
             reg pop;
