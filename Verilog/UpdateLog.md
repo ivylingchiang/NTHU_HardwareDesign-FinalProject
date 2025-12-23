@@ -73,131 +73,24 @@
   1. Complete led, Seven Segment Display
 ```
 
-
-# Note
-
-## git command 
-***Git commit***
+## ~20251221
 ```
-git status // modified, untracked, staged change => commit
+[Simon]
+  1. Complete stack design
+  2. Pmod module design
+  3. Manual Mode design/debug
 
-git add .
-git commit -m "{update info}"
-
-
-// update local file
-git fetch
-git log HEAD..origin/{branchName}
-
-git pull --ff-only
-git pull --rebase // need to fix conflict
-git rebase --continue // fixed and continue
-git rebase --abort // back to origin state
-```
-
-
-```
-git branch
-
-git checkout {branchName} // switch branch
-git checkout -b {newBranchName} // create new branch
-```
-
-* Update Main branch's content
-```
-git checkout main
-git pull --ff-only
-
-// switch to local branch
-git checkout {localBranch}
-git merge main
-
-// conflict state
-{fix the conflict file}
+[Ivy]
+  1. IO complete
+  2. Advance Map design
+  3. Manual Mode design/debug
 
 ```
 
-## code setting
-* Setting
+## ~20251223
 ```
-1. Note: 
-    (1) Tracker: 
-        0: detect black
-        1: detect white
-        detect: different with tracker
-    (2) r_IN & l_IN:
-        forward(2'b10)
-        stop(2'b00)
-```
-
-* Detecter(0: white; 1: black)
-```
-localparam [2:0]ERROR_ROAD = 3'b000;
-localparam [2:0]RIGHT_ROAD = 3'b011;
-localparam [2:0]STRAIGHT_ROAD = 3'b010;
-localparam [2:0]RIGHT_LITTLE_ROAD = 3'b001;
-localparam [2:0]LEFT_ROAD = 3'b110;
-localparam [2:0]TURN_ROAD101 = 3'b101;
-localparam [2:0]LEFT_LITTLE_ROAD = 3'b100;
-localparam [2:0]TURN_ROAD111 = 3'b111;
-```
-
-* FSM state
-```
-localparam [4:0]IDLE = 5'd0;
-localparam [4:0]START = 5'd1;
-localparam [4:0]COUNT = 5'd2;
-localparam [4:0]STRAIGHT = 5'd3;
-localparam [4:0]CHOOSE = 5'd4;
-localparam [4:0]LEFT = 5'd5;
-localparam [4:0]RIGHT = 5'd6;
-localparam [4:0]BACK = 5'd7;
-localparam [4:0]LITTLE_LEFT = 5'd8;
-localparam [4:0]LITTLE_RIGHT = 5'd9;
-localparam [4:0]FINISH = 5'd29;
-localparam [4:0]STOP = 5'd30;
-localparam [4:0]ERROR = 5'd31;
-```
-
-
-* Seven Segment Setting
-```
-0 : display = 7'b1000000;	//0000
-1 : display = 7'b1111001;   //0001
-2 : display = 7'b0100100;   //0010
-3 : display = 7'b0110000;   //0011
-4 : display = 7'b0011001;   //0100
-5 : display = 7'b0010010;   //0101
-6 : display = 7'b0000010;   //0110
-7 : display = 7'b1111000;   //0111
-8 : display = 7'b0000000;   //1000
-9 : display = 7'b0010000;	 //1001
-
-10: display = 7'b1000110; // C
-11: display = 7'b0111111; // -
-12: display = 7'b0100001 ; //d
-13: display = 7'b1000111 ; //L
-14: display = 7'b0000110 ; //E
-15: display = 7'b0101111 ; //r
-``` 
-
-* Seven Segment Display
-```
-IDLE:  IdLE
-START: ----
-COUNT: --- {counter from 3->0}
-STRAIGHT,LITTLE_LEFT,LITTLE_RIGHT: C2-{checkPoint2}
-CHOOSE: C1-{checkPoint1}
-LEFT: C3-{checkPoint3}
-RIGHT: C4-{checkPoint4}
-BACK: -00{storeState}
-STOP: {reSTART}00{storeState}
-```
-
-```
-IDLE: num3 = 4'd12;
-STRAIGHT: num3 = 4'd1;
-LEFT: num3 = 4'd13;
-RIGHT: num3 = 4'd15;
-BACK: num3 = 4'd11; //-
+[Simon/Ivy]
+  1. Complete All testing
+  2. Complete Demo video recording
+  3. Update All code structure
 ```
